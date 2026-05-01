@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es-UY">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrackMyPet | TAG QR para mascotas</title>
+
+  <style>
+    :root {
+      --bg: #f3f5f2;
+      --text: #17211b;
+      --muted: #6c756f;
+      --green: #2f8f5b;
+      --green-dark: #1d6f44;
+      --dark: #111816;
+      --danger: #c0392b;
+      --warning: #fff3d7;
+      --border: rgba(23, 33, 27, 0.11);
+      --shadow: 0 24px 70px rgba(17, 24, 22, 0.14);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, #e2f2e8 0, transparent 35%),
+        radial-gradient(circle at bottom right, #efe4d2 0, transparent 32%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 18px;
+      padding: 15px 16px;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+      text-align: center;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn-primary { background: var(--green); color: white; }
+    .btn-primary:hover { background: var(--green-dark); }
+    .btn-dark { background: var(--dark); color: white; }
+    .btn-soft { background: #e8f4ed; color: var(--green-dark); }
+
+    .landing {
+      display: none;
+      padding: 28px 0 70px;
+    }
+
+    .landing.active {
+      display: block;
+    }
+
+    .nav {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: var(--dark);
+      color: white;
+      display: grid;
+      place-items: center;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 28px;
+      align-items: center;
+      padding: 54px 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      background: white;
+      border: 1px solid var(--border);
+      padding: 9px 13px;
+      border-radius: 999px;
+      color: var(--green-dark);
+      font-size: 14px;
+      font-weight: 850;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 6vw, 76px);
+      line-height: .93;
+      letter-spacing: -0.075em;
+      margin-bottom: 20px;
+    }
+
+    .hero p, .section-text {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 620px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .mock-card {
+      background: white;
+      border-radius: 38px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.9);
+    }
+
+    .mock-phone {
+      border-radius: 30px;
+      background: #111816;
+      color: white;
+      padding: 18px;
+      min-height: 460px;
+      display: grid;
+      align-content: end;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .mock-phone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,.22), transparent 28%),
+        linear-gradient(145deg, rgba(47,143,91,.45), transparent 60%);
+    }
+
+    .mock-content {
+      position: relative;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 18px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .info-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 22px;
+      box-shadow: 0 12px 35px rgba(17,24,22,.06);
+    }
+
+    .info-card h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .info-card p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .qr-app {
+      width: min(470px, 100%);
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 18px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-app.active {
+      display: flex;
+    }
+
+    .screen { width: 100%; display: none; animation: fadeUp 0.25s ease both; }
+    .screen.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 36px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .top {
+      position: relative;
+      min-height: 260px;
+      background: linear-gradient(135deg, #17211b, #536159);
+      display: grid;
+      place-items: center;
+      padding: 0;
+      color: white;
+      overflow: hidden;
+    }
+
+    #activationScreen .top {
+      padding: 24px;
+    }
+
+    .pet-photo {
+      width: 152px;
+      height: 152px;
+      border-radius: 48px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      display: grid;
+      place-items: center;
+      font-size: 78px;
+      overflow: hidden;
+    }
+
+    .carousel-photo {
+      width: 100%;
+      height: 260px;
+      border-radius: 0;
+      border: 0;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .pet-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+    .edit-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 46px;
+      height: 46px;
+      border: 0;
+      border-radius: 17px;
+      background: rgba(0,0,0,0.25);
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      z-index: 4;
+    }
+
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.28);
+      color: white;
+      font-size: 34px;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 3;
+      backdrop-filter: blur(10px);
+    }
+
+    .carousel-arrow.left { left: 14px; }
+    .carousel-arrow.right { right: 14px; }
+
+    .carousel-dots {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 14px;
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+      z-index: 3;
+    }
+
+    .carousel-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+    }
+
+    .carousel-dot.active {
+      width: 20px;
+      border-radius: 999px;
+      background: white;
+    }
+
+    .body { padding: 24px; }
+
+    .status {
+      display: inline-flex;
+      background: var(--warning);
+      color: #8a5b00;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 850;
+      margin-bottom: 12px;
+    }
+
+    h1 { font-size: 38px; line-height: 1; letter-spacing: -0.06em; margin-bottom: 8px; }
+    h2 { font-size: 30px; line-height: 1; letter-spacing: -0.05em; margin-bottom: 10px; }
+
+    .subtitle { color: var(--muted); font-size: 16px; margin-bottom: 18px; }
+
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
+
+    .info-list { display: grid; gap: 10px; margin-top: 14px; }
+
+    .info-item {
+      padding: 14px 15px;
+      border-radius: 18px;
+      background: #f5f6f3;
+      border: 1px solid var(--border);
+      color: #45504a;
+      font-size: 15px;
+    }
+
+    .info-item strong { color: var(--text); }
+
+    .form { display: grid; gap: 12px; margin-top: 14px; }
+    .field { display: grid; gap: 6px; }
+
+    label { color: var(--muted); font-size: 13px; font-weight: 850; }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #f8f9f7;
+      border-radius: 16px;
+      padding: 14px;
+      font: inherit;
+      outline: none;
+    }
+
+    input[type="file"] {
+      background: white;
+      padding: 12px;
+    }
+
+    textarea { min-height: 82px; resize: vertical; }
+
+    .note {
+      margin-top: 12px;
+      padding: 13px 14px;
+      border-radius: 18px;
+      background: #f5f6f3;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .error, .success {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 750;
+      margin-bottom: 10px;
+    }
+
+    .error { background: #fdecea; color: var(--danger); }
+    .success { background: #e8f4ed; color: var(--green-dark); }
+
+    .mini-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .back-btn {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 850;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .footer-text {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 14px;
+    }
+
+    .loading {
+      opacity: .75;
+      pointer-events: none;
+    }
+
+    @media (max-width: 800px) {
+      .hero { grid-template-columns: 1fr; padding-top: 28px; }
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 430px) {
+      .qr-app { padding: 10px; }
+      .card { border-radius: 30px; }
+      .top { min-height: 230px; }
+      .body { padding: 20px; }
+      .actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- PÁGINA PRINCIPAL: trackmypet.uy -->
+  <main id="landingPage" class="landing">
+    <div class="container">
+      <header class="nav">
+        <a class="brand" href="/">
+          <span class="brand-mark">🐾</span>
+          <span>TrackMyPet</span>
+        </a>
+        <a class="btn btn-primary" href="https://wa.me/598XXXXXXXX?text=Hola%2C%20quiero%20comprar%20un%20TAG%20QR" target="_blank" rel="noopener">Comprar</a>
+      </header>
+
+      <section class="hero">
+        <div>
+          <span class="pill">TAG QR para mascotas</span>
+          <h1>Ayudá a que tu mascota vuelva a casa.</h1>
+          <p>
+            Un TAG con código QR que lleva a una ficha online con fotos, teléfono, WhatsApp y datos importantes de tu mascota.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://wa.me/598XXXXXXXX?text=Hola%2C%20quiero%20comprar%20un%20TAG%20QR" target="_blank" rel="noopener">Comprar por WhatsApp</a>
+            <a class="btn btn-soft" href="/231231">Ver ejemplo</a>
+          </div>
+        </div>
+
+        <div class="mock-card">
+          <div class="mock-phone">
+            <div class="mock-content">
+              <span class="status">Estoy perdido/a</span>
+              <h2>Luna</h2>
+              <p style="color:rgba(255,255,255,.75); margin-bottom:14px;">Si me encontraste, contactá a mi familia.</p>
+              <div class="actions">
+                <span class="btn btn-primary">WhatsApp</span>
+                <span class="btn btn-dark">Llamar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Cómo funciona</h2>
+        <p class="section-text">Simple, sin app y pensado para que cualquiera pueda ayudar.</p>
+
+        <div class="grid-3">
+          <article class="info-card">
+            <h3>1. Comprás el TAG</h3>
+            <p>Cada TAG viene con un código QR único y un PIN privado dentro del embalaje.</p>
+          </article>
+          <article class="info-card">
+            <h3>2. Activás con PIN</h3>
+            <p>Escaneás el QR, cargás los datos de tu mascota y subís fotos desde el celular.</p>
+          </article>
+          <article class="info-card">
+            <h3>3. Te contactan</h3>
+            <p>Si alguien encuentra a tu mascota, escanea el QR y puede llamarte o escribirte por WhatsApp.</p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- PÁGINAS INTERNAS: trackmypet.uy/258645 -->
+  <main id="qrApp" class="qr-app">
+    <section id="activationScreen" class="screen">
+      <div class="card">
+        <div class="top"><div class="pet-photo">🐾</div></div>
+        <div class="body">
+          <h2>Activá tu TAG</h2>
+          <p class="subtitle">Ingresá el PIN que viene en el embalaje y completá la información de tu mascota.</p>
+
+          <div id="activationError" class="error">PIN incorrecto. Revisá el PIN del sobre.</div>
+          <div id="activationSuccess" class="success">TAG activado correctamente.</div>
+
+          <form class="form" id="activationForm">
+            <div class="field"><label for="activationPin">PIN del TAG</label><input id="activationPin" type="password" inputmode="numeric" placeholder="Ej: 8472" required /></div>
+            <div class="field"><label for="petName">Nombre de la mascota</label><input id="petName" type="text" placeholder="Ej: Luna" required /></div>
+            <div class="field"><label for="ownerPhone">Teléfono / WhatsApp</label><input id="ownerPhone" type="tel" placeholder="Ej: 099 123 456" required /></div>
+            <div class="field"><label for="petZone">Zona o barrio</label><input id="petZone" type="text" placeholder="Ej: Prado, Montevideo" /></div>
+            <div class="field"><label for="petInfo">Información importante</label><textarea id="petInfo" placeholder="Ej: Es nerviosa, no muerde, toma medicación..."></textarea></div>
+            <div class="field"><label for="petPhotos">Fotos de la mascota, hasta 3</label><input id="petPhotos" type="file" accept="image/*" multiple /></div>
+            <button class="btn btn-primary" type="submit">Activar TAG</button>
+          </form>
+
+          <p class="note">El PIN solo sirve para activar y editar. No lo compartas públicamente.</p>
+        </div>
+      </div>
+      <p class="footer-text">TrackMyPet · Identificación QR para mascotas</p>
+    </section>
+
+    <section id="profileScreen" class="screen">
+      <div class="card">
+        <div class="top">
+          <button class="edit-btn" id="openPinScreen" aria-label="Editar información">✏️</button>
+          <button class="carousel-arrow left" id="prevPhoto" type="button" aria-label="Foto anterior">‹</button>
+          <div class="pet-photo carousel-photo" id="profilePhoto">🐶</div>
+          <button class="carousel-arrow right" id="nextPhoto" type="button" aria-label="Foto siguiente">›</button>
+          <div class="carousel-dots" id="carouselDots"></div>
+        </div>
+
+        <div class="body">
+          <span class="status">Estoy perdido/a</span>
+          <h1 id="profileName">Mascota</h1>
+          <p class="subtitle">Si me encontraste, por favor contactá a mi familia.</p>
+
+          <div class="actions">
+            <a id="whatsappBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener">WhatsApp</a>
+            <a id="callBtn" class="btn btn-dark" href="#">Llamar</a>
+          </div>
+
+          <div class="info-list">
+            <div class="info-item"><strong>Zona:</strong> <span id="profileZone">No especificada</span></div>
+            <div class="info-item"><strong>Información:</strong> <span id="profileInfo">No hay información adicional.</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="footer-text">TrackMyPet · Ayudando a que vuelva a casa</p>
+    </section>
+
+    <section id="pinScreen" class="screen">
+      <div class="card">
+        <div class="body">
+          <div class="mini-header"><button class="back-btn" id="backToProfileFromPin">← Volver</button></div>
+          <h2>Editar información</h2>
+          <p class="subtitle">Ingresá el PIN del TAG para modificar los datos de la mascota.</p>
+
+          <div id="pinError" class="error">PIN incorrecto. No podés editar este TAG.</div>
+
+          <form class="form" id="pinForm">
+            <div class="field"><label for="editPin">PIN del TAG</label><input id="editPin" type="password" inputmode="numeric" placeholder="Ej: 8472" required /></div>
+            <button class="btn btn-primary" type="submit">Entrar a editar</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="editScreen" class="screen">
+      <div class="card">
+        <div class="body">
+          <div class="mini-header"><button class="back-btn" id="backToProfileFromEdit">← Cancelar</button></div>
+          <h2>Editar datos</h2>
+          <p class="subtitle">Actualizá la información que verá quien escanee el QR.</p>
+
+          <div id="editSuccess" class="success">Datos actualizados correctamente.</div>
+
+          <form class="form" id="editForm">
+            <div class="field"><label for="editPetName">Nombre de la mascota</label><input id="editPetName" type="text" required /></div>
+            <div class="field"><label for="editOwnerPhone">Teléfono / WhatsApp</label><input id="editOwnerPhone" type="tel" required /></div>
+            <div class="field"><label for="editPetZone">Zona o barrio</label><input id="editPetZone" type="text" /></div>
+            <div class="field"><label for="editPetInfo">Información importante</label><textarea id="editPetInfo"></textarea></div>
+            <div class="field"><label for="editPetPhotos">Cambiar fotos, hasta 3</label><input id="editPetPhotos" type="file" accept="image/*" multiple /></div>
+            <button class="btn btn-primary" type="submit">Guardar cambios</button>
+          </form>
+
+          <p class="note">Si no elegís fotos nuevas, se mantienen las anteriores.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // 1) Pegá acá tus datos de Supabase
+    const SUPABASE_URL = "https://ohoklhgivqjqtkqzrrhi.supabase.co";
+    const SUPABASE_KEY = "PEGAR_ACA_TU_ANON_PUBLIC_KEY_O_PUBLISHABLE_KEY_COMPLETA";
+
+    // 2) Nombre del bucket de Storage que vas a crear en Supabase
+    const STORAGE_BUCKET = "pet-photos";
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const pathCode = window.location.pathname.replace("/", "").trim();
+    const isTagPage = /^[0-9]{4,10}$/.test(pathCode);
+    const tagCode = isTagPage ? pathCode : null;
+
+    const landingPage = document.getElementById("landingPage");
+    const qrApp = document.getElementById("qrApp");
+
+    let currentPhotoIndex = 0;
+    let currentPhotos = [];
+
+    const screens = {
+      activation: document.getElementById("activationScreen"),
+      profile: document.getElementById("profileScreen"),
+      pin: document.getElementById("pinScreen"),
+      edit: document.getElementById("editScreen")
+    };
+
+    const els = {
+      activationForm: document.getElementById("activationForm"),
+      activationPin: document.getElementById("activationPin"),
+      petName: document.getElementById("petName"),
+      ownerPhone: document.getElementById("ownerPhone"),
+      petZone: document.getElementById("petZone"),
+      petInfo: document.getElementById("petInfo"),
+      petPhotos: document.getElementById("petPhotos"),
+      activationError: document.getElementById("activationError"),
+      activationSuccess: document.getElementById("activationSuccess"),
+      profilePhoto: document.getElementById("profilePhoto"),
+      prevPhoto: document.getElementById("prevPhoto"),
+      nextPhoto: document.getElementById("nextPhoto"),
+      carouselDots: document.getElementById("carouselDots"),
+      profileName: document.getElementById("profileName"),
+      profileZone: document.getElementById("profileZone"),
+      profileInfo: document.getElementById("profileInfo"),
+      whatsappBtn: document.getElementById("whatsappBtn"),
+      callBtn: document.getElementById("callBtn"),
+      openPinScreen: document.getElementById("openPinScreen"),
+      pinForm: document.getElementById("pinForm"),
+      editPin: document.getElementById("editPin"),
+      pinError: document.getElementById("pinError"),
+      editForm: document.getElementById("editForm"),
+      editPetName: document.getElementById("editPetName"),
+      editOwnerPhone: document.getElementById("editOwnerPhone"),
+      editPetZone: document.getElementById("editPetZone"),
+      editPetInfo: document.getElementById("editPetInfo"),
+      editPetPhotos: document.getElementById("editPetPhotos"),
+      editSuccess: document.getElementById("editSuccess"),
+      backToProfileFromPin: document.getElementById("backToProfileFromPin"),
+      backToProfileFromEdit: document.getElementById("backToProfileFromEdit")
+    };
+
+    function showLandingOrTag() {
+      if (isTagPage) {
+        landingPage.classList.remove("active");
+        qrApp.classList.add("active");
+        document.title = "TAG " + tagCode + " | TrackMyPet";
+        renderProfile();
+      } else {
+        qrApp.classList.remove("active");
+        landingPage.classList.add("active");
+        document.title = "TrackMyPet | TAG QR para mascotas";
+      }
+    }
+
+    function showScreen(name) {
+      Object.values(screens).forEach(function(screen) {
+        screen.classList.remove("active");
+      });
+      screens[name].classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function normalizePhone(phone) {
+      let clean = String(phone || "").replace(/[^0-9]/g, "");
+      if (clean.startsWith("0")) clean = "598" + clean.substring(1);
+      if (!clean.startsWith("598")) clean = "598" + clean;
+      return clean;
+    }
+
+    async function getPetData() {
+      if (!tagCode) return null;
+
+      const { data, error } = await db
+        .from("tags")
+        .select("*")
+        .eq("codigo", tagCode)
+        .single();
+
+      if (error) {
+        console.error("Error leyendo TAG:", error);
+        return null;
+      }
+
+      return data;
+    }
+
+    async function uploadPhotos(fileList) {
+      const files = Array.from(fileList || []).slice(0, 3);
+      const urls = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const path = tagCode + "/" + Date.now() + "-" + i + "." + ext;
+
+        const { error } = await db.storage
+          .from(STORAGE_BUCKET)
+          .upload(path, file, { upsert: true });
+
+        if (error) {
+          console.error("Error subiendo foto:", error);
+          alert("No se pudo subir una foto. Revisá el bucket de Supabase Storage.");
+          return null;
+        }
+
+        const { data } = db.storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(path);
+
+        urls.push(data.publicUrl);
+      }
+
+      return urls;
+    }
+
+    async function savePetData(data) {
+      const { error } = await db
+        .from("tags")
+        .update({
+          activo: true,
+          nombre: data.name,
+          telefono: data.phone,
+          zona: data.zone,
+          info: data.info,
+          foto1: data.photos[0] || data.oldPhotos?.[0] || null,
+          foto2: data.photos[1] || data.oldPhotos?.[1] || null,
+          foto3: data.photos[2] || data.oldPhotos?.[2] || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("codigo", tagCode);
+
+      if (error) {
+        console.error("Error guardando TAG:", error);
+        alert("Error al guardar. Revisá permisos de Supabase/RLS.");
+        return false;
+      }
+
+      return true;
+    }
+
+    async function renderProfile() {
+      const data = await getPetData();
+
+      if (!data) {
+        els.activationError.textContent = "Este TAG no existe o todavía no fue creado.";
+        els.activationError.style.display = "block";
+        showScreen("activation");
+        return;
+      }
+
+      if (!data.activo) {
+        showScreen("activation");
+        return;
+      }
+
+      els.profileName.textContent = data.nombre || "Mascota";
+      els.profileZone.textContent = data.zona || "No especificada";
+      els.profileInfo.textContent = data.info || "No hay información adicional.";
+
+      currentPhotos = [data.foto1, data.foto2, data.foto3].filter(Boolean);
+      currentPhotoIndex = 0;
+      renderCarousel(data.nombre || "mascota");
+
+      const phone = normalizePhone(data.telefono || "");
+      const message = encodeURIComponent("Hola, encontré a " + (data.nombre || "tu mascota") + ". Escaneé su TAG QR.");
+      els.whatsappBtn.href = "https://wa.me/" + phone + "?text=" + message;
+      els.callBtn.href = "tel:+" + phone;
+
+      showScreen("profile");
+    }
+
+    function renderCarousel(petName) {
+      if (!currentPhotos.length) {
+        els.profilePhoto.innerHTML = "🐶";
+        els.prevPhoto.style.display = "none";
+        els.nextPhoto.style.display = "none";
+        els.carouselDots.style.display = "none";
+        return;
+      }
+
+      els.profilePhoto.innerHTML = '<img src="' + currentPhotos[currentPhotoIndex] + '" alt="Foto de ' + petName + '">';
+
+      const showControls = currentPhotos.length > 1;
+      els.prevPhoto.style.display = showControls ? "block" : "none";
+      els.nextPhoto.style.display = showControls ? "block" : "none";
+      els.carouselDots.style.display = showControls ? "flex" : "none";
+
+      els.carouselDots.innerHTML = currentPhotos.map(function(_, index) {
+        return '<span class="carousel-dot ' + (index === currentPhotoIndex ? "active" : "") + '"></span>';
+      }).join("");
+    }
+
+    async function fillEditForm() {
+      const data = await getPetData();
+      if (!data) return;
+
+      els.editPetName.value = data.nombre || "";
+      els.editOwnerPhone.value = data.telefono || "";
+      els.editPetZone.value = data.zona || "";
+      els.editPetInfo.value = data.info || "";
+    }
+
+    els.activationForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      els.activationError.style.display = "none";
+      els.activationSuccess.style.display = "none";
+      els.activationForm.classList.add("loading");
+
+      const tag = await getPetData();
+
+      if (!tag) {
+        els.activationForm.classList.remove("loading");
+        els.activationError.textContent = "Este TAG no existe. Revisá que el código esté creado en Supabase.";
+        els.activationError.style.display = "block";
+        return;
+      }
+
+      if (tag.activo) {
+        els.activationForm.classList.remove("loading");
+        renderProfile();
+        return;
+      }
+
+      if (els.activationPin.value.trim() !== tag.pin) {
+        els.activationForm.classList.remove("loading");
+        els.activationError.textContent = "PIN incorrecto. Revisá el PIN del embalaje.";
+        els.activationError.style.display = "block";
+        return;
+      }
+
+      const photos = await uploadPhotos(els.petPhotos.files);
+      if (photos === null) {
+        els.activationForm.classList.remove("loading");
+        return;
+      }
+
+      const ok = await savePetData({
+        name: els.petName.value.trim(),
+        phone: els.ownerPhone.value.trim(),
+        zone: els.petZone.value.trim(),
+        info: els.petInfo.value.trim(),
+        photos
+      });
+
+      els.activationForm.classList.remove("loading");
+      if (!ok) return;
+
+      els.activationSuccess.style.display = "block";
+      setTimeout(renderProfile, 600);
+    });
+
+    els.openPinScreen.addEventListener("click", function() {
+      els.pinError.style.display = "none";
+      els.editPin.value = "";
+      showScreen("pin");
+    });
+
+    els.pinForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      els.pinError.style.display = "none";
+      const tag = await getPetData();
+
+      if (!tag || els.editPin.value.trim() !== tag.pin) {
+        els.pinError.style.display = "block";
+        return;
+      }
+
+      await fillEditForm();
+      showScreen("edit");
+    });
+
+    els.editForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      els.editForm.classList.add("loading");
+
+      const tag = await getPetData();
+      if (!tag) {
+        els.editForm.classList.remove("loading");
+        alert("No se encontró este TAG.");
+        return;
+      }
+
+      let photos = [];
+      if (els.editPetPhotos.files && els.editPetPhotos.files.length) {
+        const uploaded = await uploadPhotos(els.editPetPhotos.files);
+        if (uploaded === null) {
+          els.editForm.classList.remove("loading");
+          return;
+        }
+        photos = uploaded;
+      }
+
+      const oldPhotos = [tag.foto1, tag.foto2, tag.foto3].filter(Boolean);
+
+      const ok = await savePetData({
+        name: els.editPetName.value.trim(),
+        phone: els.editOwnerPhone.value.trim(),
+        zone: els.editPetZone.value.trim(),
+        info: els.editPetInfo.value.trim(),
+        photos,
+        oldPhotos
+      });
+
+      els.editForm.classList.remove("loading");
+      if (!ok) return;
+
+      els.editSuccess.style.display = "block";
+      setTimeout(renderProfile, 700);
+    });
+
+    els.prevPhoto.addEventListener("click", function() {
+      if (!currentPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + currentPhotos.length) % currentPhotos.length;
+      renderCarousel(els.profileName.textContent || "mascota");
+    });
+
+    els.nextPhoto.addEventListener("click", function() {
+      if (!currentPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % currentPhotos.length;
+      renderCarousel(els.profileName.textContent || "mascota");
+    });
+
+    els.backToProfileFromPin.addEventListener("click", renderProfile);
+    els.backToProfileFromEdit.addEventListener("click", renderProfile);
+
+    showLandingOrTag();
+  </script>
+</body>
+</html>
