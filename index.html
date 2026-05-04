@@ -366,6 +366,27 @@
 
     label { color: var(--muted); font-size: 13px; font-weight: 850; }
 
+
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #f8f9f7;
+      border-radius: 16px;
+      padding: 14px;
+      font: inherit;
+      outline: none;
+      color: var(--text);
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position:
+        calc(100% - 20px) 50%,
+        calc(100% - 14px) 50%;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+    }
+
     input, textarea {
       width: 100%;
       border: 1px solid var(--border);
@@ -733,6 +754,14 @@
           <form class="form" id="activationForm">
             <div class="field"><label for="activationPin">PIN del TAG</label><input id="activationPin" type="password" inputmode="numeric" placeholder="Ej: 8472" required /></div>
             <div class="field"><label for="petName">Nombre de la mascota</label><input id="petName" type="text" placeholder="Ej: Luna" required /></div>
+            <div class="field">
+              <label for="petSex">Sexo</label>
+              <select id="petSex" required>
+                <option value="">Seleccionar</option>
+                <option value="macho">Macho</option>
+                <option value="hembra">Hembra</option>
+              </select>
+            </div>
             <div class="field"><label for="ownerPhone">Teléfono / WhatsApp</label><input id="ownerPhone" type="tel" placeholder="Ej: 099 123 456" required /></div>
             <div class="field"><label for="petZone">Zona o barrio</label><input id="petZone" type="text" placeholder="Ej: Prado, Montevideo" /></div>
             <div class="field"><label for="petInfo">Información importante</label><textarea id="petInfo" placeholder="Ej: Es nerviosa, no muerde, toma medicación..."></textarea></div>
@@ -767,6 +796,7 @@
           </div>
 
           <div class="info-list">
+            <div class="info-item"><strong>Sexo:</strong> <span id="profileSex">No especificado</span></div>
             <div class="info-item"><strong>Zona:</strong> <span id="profileZone">No especificada</span></div>
             <div class="info-item"><strong>Información:</strong> <span id="profileInfo">No hay información adicional.</span></div>
           </div>
@@ -803,6 +833,14 @@
 
           <form class="form" id="editForm">
             <div class="field"><label for="editPetName">Nombre de la mascota</label><input id="editPetName" type="text" required /></div>
+            <div class="field">
+              <label for="editPetSex">Sexo</label>
+              <select id="editPetSex">
+                <option value="">Seleccionar</option>
+                <option value="macho">Macho</option>
+                <option value="hembra">Hembra</option>
+              </select>
+            </div>
             <div class="field"><label for="editOwnerPhone">Teléfono / WhatsApp</label><input id="editOwnerPhone" type="tel" required /></div>
             <div class="field"><label for="editPetZone">Zona o barrio</label><input id="editPetZone" type="text" /></div>
             <div class="field"><label for="editPetInfo">Información importante</label><textarea id="editPetInfo"></textarea></div>
@@ -864,6 +902,7 @@
       activationForm: document.getElementById("activationForm"),
       activationPin: document.getElementById("activationPin"),
       petName: document.getElementById("petName"),
+      petSex: document.getElementById("petSex"),
       ownerPhone: document.getElementById("ownerPhone"),
       petZone: document.getElementById("petZone"),
       petInfo: document.getElementById("petInfo"),
@@ -875,6 +914,7 @@
       nextPhoto: document.getElementById("nextPhoto"),
       carouselDots: document.getElementById("carouselDots"),
       profileName: document.getElementById("profileName"),
+      profileSex: document.getElementById("profileSex"),
       profileZone: document.getElementById("profileZone"),
       profileInfo: document.getElementById("profileInfo"),
       whatsappBtn: document.getElementById("whatsappBtn"),
@@ -885,6 +925,7 @@
       pinError: document.getElementById("pinError"),
       editForm: document.getElementById("editForm"),
       editPetName: document.getElementById("editPetName"),
+      editPetSex: document.getElementById("editPetSex"),
       editOwnerPhone: document.getElementById("editOwnerPhone"),
       editPetZone: document.getElementById("editPetZone"),
       editPetInfo: document.getElementById("editPetInfo"),
@@ -980,6 +1021,7 @@
         .from("tags")
         .update({
           activo: true,
+          sexo: data.sexo,
           nombre: data.name,
           telefono: data.phone,
           zona: data.zone,
@@ -1014,6 +1056,16 @@
         showScreen("activation");
         return;
       }
+
+      const statusText = data.sexo === "hembra" ? "Estoy perdida" : "Estoy perdido";
+      document.querySelectorAll(".status").forEach(function(item) {
+        item.textContent = statusText;
+      });
+
+      els.profileSex.textContent =
+        data.sexo === "hembra" ? "Hembra" :
+        data.sexo === "macho" ? "Macho" :
+        "No especificado";
 
       els.profileName.textContent = data.nombre || "Mascota";
       els.profileZone.textContent = data.zona || "No especificada";
@@ -1101,6 +1153,7 @@
       if (!data) return;
 
       els.editPetName.value = data.nombre || "";
+      els.editPetSex.value = data.sexo || "";
       els.editOwnerPhone.value = data.telefono || "";
       els.editPetZone.value = data.zona || "";
       els.editPetInfo.value = data.info || "";
@@ -1143,6 +1196,7 @@
 
       const ok = await savePetData({
         name: els.petName.value.trim(),
+        sexo: els.petSex.value,
         phone: els.ownerPhone.value.trim(),
         zone: els.petZone.value.trim(),
         info: els.petInfo.value.trim(),
@@ -1203,6 +1257,7 @@
 
       const ok = await savePetData({
         name: els.editPetName.value.trim(),
+        sexo: els.editPetSex.value,
         phone: els.editOwnerPhone.value.trim(),
         zone: els.editPetZone.value.trim(),
         info: els.editPetInfo.value.trim(),
