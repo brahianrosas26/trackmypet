@@ -432,6 +432,203 @@
       pointer-events: none;
     }
 
+
+    .tag-header-logo {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(255,255,255,0.9);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 12px 32px rgba(17,24,22,0.12);
+      color: var(--text);
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      font-size: 15px;
+    }
+
+    .mini-paw {
+      width: 25px;
+      height: 25px;
+      border-radius: 9px;
+      background: var(--dark);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+    }
+
+    .edit-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: auto;
+      height: 42px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 13px;
+      background: rgba(255,255,255,0.18);
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      z-index: 4;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-weight: 850;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .edit-btn::before {
+      content: "✎";
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.18);
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .carousel-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      font-size: 30px;
+      line-height: 0;
+      text-align: center;
+    }
+
+    .carousel-arrow span {
+      display: block;
+      transform: translateY(-2px);
+    }
+
+    .carousel-photo {
+      cursor: zoom-in;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: none;
+      background: rgba(0,0,0,0.94);
+      color: white;
+      touch-action: pan-y;
+    }
+
+    .lightbox.active {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .lightbox-top {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .lightbox-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      letter-spacing: -0.035em;
+    }
+
+    .lightbox-close {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.14);
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    .lightbox-stage {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
+    .lightbox-stage img {
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 138px);
+      object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .lightbox-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.14);
+      color: white;
+      font-size: 34px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      backdrop-filter: blur(10px);
+    }
+
+    .lightbox-arrow span {
+      transform: translateY(-2px);
+    }
+
+    .lightbox-arrow.left { left: 14px; }
+    .lightbox-arrow.right { right: 14px; }
+
+    .lightbox-dots {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .lightbox-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.36);
+    }
+
+    .lightbox-dot.active {
+      width: 22px;
+      border-radius: 999px;
+      background: white;
+    }
+
     @media (max-width: 800px) {
       .hero { grid-template-columns: 1fr; padding-top: 28px; }
       .grid-3 { grid-template-columns: 1fr; }
@@ -511,6 +708,7 @@
 
   <!-- PÁGINAS INTERNAS: trackmypet.uy/258645 -->
   <main id="qrApp" class="qr-app">
+    <a class="tag-header-logo" href="/" aria-label="Volver al inicio"><span class="mini-paw">🐾</span><span>TrackMyPet</span></a>
     <section id="activationScreen" class="screen">
       <div class="card">
         <div class="top"><div class="pet-photo">🐾</div></div>
@@ -540,10 +738,10 @@
     <section id="profileScreen" class="screen">
       <div class="card">
         <div class="top">
-          <button class="edit-btn" id="openPinScreen" aria-label="Editar información">✏️</button>
-          <button class="carousel-arrow left" id="prevPhoto" type="button" aria-label="Foto anterior">‹</button>
+          <button class="edit-btn" id="openPinScreen" aria-label="Editar información"><span>Editar</span></button>
+          <button class="carousel-arrow left" id="prevPhoto" type="button" aria-label="Foto anterior"><span>‹</span></button>
           <div class="pet-photo carousel-photo" id="profilePhoto">🐶</div>
-          <button class="carousel-arrow right" id="nextPhoto" type="button" aria-label="Foto siguiente">›</button>
+          <button class="carousel-arrow right" id="nextPhoto" type="button" aria-label="Foto siguiente"><span>›</span></button>
           <div class="carousel-dots" id="carouselDots"></div>
         </div>
 
@@ -607,6 +805,22 @@
     </section>
   </main>
 
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <div class="lightbox-top">
+      <a class="lightbox-brand" href="/"><span class="mini-paw">🐾</span><span>TrackMyPet</span></a>
+      <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Cerrar">×</button>
+    </div>
+
+    <div class="lightbox-stage" id="lightboxStage">
+      <button class="lightbox-arrow left" id="lightboxPrev" type="button" aria-label="Foto anterior"><span>‹</span></button>
+      <img id="lightboxImage" src="" alt="Foto ampliada de la mascota">
+      <button class="lightbox-arrow right" id="lightboxNext" type="button" aria-label="Foto siguiente"><span>›</span></button>
+    </div>
+
+    <div class="lightbox-dots" id="lightboxDots"></div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // 1) Pegá acá tus datos de Supabase
@@ -665,6 +879,13 @@
       editPetInfo: document.getElementById("editPetInfo"),
       editPetPhotos: document.getElementById("editPetPhotos"),
       editSuccess: document.getElementById("editSuccess"),
+      lightbox: document.getElementById("lightbox"),
+      lightboxImage: document.getElementById("lightboxImage"),
+      lightboxClose: document.getElementById("lightboxClose"),
+      lightboxPrev: document.getElementById("lightboxPrev"),
+      lightboxNext: document.getElementById("lightboxNext"),
+      lightboxDots: document.getElementById("lightboxDots"),
+      lightboxStage: document.getElementById("lightboxStage"),
       backToProfileFromPin: document.getElementById("backToProfileFromPin"),
       backToProfileFromEdit: document.getElementById("backToProfileFromEdit")
     };
@@ -820,6 +1041,50 @@
       }).join("");
     }
 
+
+    function openLightbox() {
+      if (!currentPhotos.length) return;
+      renderLightbox();
+      els.lightbox.classList.add("active");
+      els.lightbox.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeLightbox() {
+      els.lightbox.classList.remove("active");
+      els.lightbox.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    function renderLightbox() {
+      if (!currentPhotos.length) return;
+
+      els.lightboxImage.src = currentPhotos[currentPhotoIndex];
+
+      const showControls = currentPhotos.length > 1;
+      els.lightboxPrev.style.display = showControls ? "flex" : "none";
+      els.lightboxNext.style.display = showControls ? "flex" : "none";
+      els.lightboxDots.style.display = showControls ? "flex" : "none";
+
+      els.lightboxDots.innerHTML = currentPhotos.map(function(_, index) {
+        return '<span class="lightbox-dot ' + (index === currentPhotoIndex ? "active" : "") + '"></span>';
+      }).join("");
+    }
+
+    function nextImage() {
+      if (!currentPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex + 1) % currentPhotos.length;
+      renderCarousel(els.profileName.textContent || "mascota");
+      renderLightbox();
+    }
+
+    function prevImage() {
+      if (!currentPhotos.length) return;
+      currentPhotoIndex = (currentPhotoIndex - 1 + currentPhotos.length) % currentPhotos.length;
+      renderCarousel(els.profileName.textContent || "mascota");
+      renderLightbox();
+    }
+
     async function fillEditForm() {
       const data = await getPetData();
       if (!data) return;
@@ -941,17 +1206,49 @@
       setTimeout(renderProfile, 700);
     });
 
-    els.prevPhoto.addEventListener("click", function() {
-      if (!currentPhotos.length) return;
-      currentPhotoIndex = (currentPhotoIndex - 1 + currentPhotos.length) % currentPhotos.length;
-      renderCarousel(els.profileName.textContent || "mascota");
+    els.prevPhoto.addEventListener("click", function(event) {
+      event.stopPropagation();
+      prevImage();
     });
 
-    els.nextPhoto.addEventListener("click", function() {
-      if (!currentPhotos.length) return;
-      currentPhotoIndex = (currentPhotoIndex + 1) % currentPhotos.length;
-      renderCarousel(els.profileName.textContent || "mascota");
+    els.nextPhoto.addEventListener("click", function(event) {
+      event.stopPropagation();
+      nextImage();
     });
+
+    els.profilePhoto.addEventListener("click", openLightbox);
+    els.lightboxClose.addEventListener("click", closeLightbox);
+    els.lightboxPrev.addEventListener("click", function(event) {
+      event.stopPropagation();
+      prevImage();
+    });
+    els.lightboxNext.addEventListener("click", function(event) {
+      event.stopPropagation();
+      nextImage();
+    });
+
+    els.lightbox.addEventListener("click", function(event) {
+      if (event.target === els.lightbox) closeLightbox();
+    });
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    els.lightboxStage.addEventListener("touchstart", function(event) {
+      touchStartX = event.changedTouches[0].screenX;
+    }, { passive: true });
+
+    els.lightboxStage.addEventListener("touchend", function(event) {
+      touchEndX = event.changedTouches[0].screenX;
+      const diff = touchEndX - touchStartX;
+
+      if (Math.abs(diff) < 45) return;
+      if (diff < 0) {
+        nextImage();
+      } else {
+        prevImage();
+      }
+    }, { passive: true });
 
     els.backToProfileFromPin.addEventListener("click", renderProfile);
     els.backToProfileFromEdit.addEventListener("click", renderProfile);
