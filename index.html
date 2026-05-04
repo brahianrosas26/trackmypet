@@ -642,14 +642,15 @@
       .body { padding: 20px; }
       .actions { grid-template-columns: 1fr; }
     }
-  #profileScreen .card {
-  margin-top: 56px;
+.qr-app.active {
+  align-items: flex-start;
+  padding-top: 76px;
 }
 
-#activationScreen .card,
-#pinScreen .card,
-#editScreen .card {
-  margin-top: 56px;
+@media (max-width: 430px) {
+  .qr-app.active {
+    padding-top: 76px;
+  }
 }
   </style>
 </head>
