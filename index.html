@@ -1286,6 +1286,27 @@
     let touchStartX = 0;
     let touchEndX = 0;
 
+    let mainTouchStartX = 0;
+let mainTouchEndX = 0;
+
+els.profilePhoto.addEventListener("touchstart", function(event) {
+  mainTouchStartX = event.changedTouches[0].screenX;
+}, { passive: true });
+
+els.profilePhoto.addEventListener("touchend", function(event) {
+  mainTouchEndX = event.changedTouches[0].screenX;
+
+  const diff = mainTouchEndX - mainTouchStartX;
+
+  if (Math.abs(diff) < 45) return;
+
+  if (diff < 0) {
+    nextImage();
+  } else {
+    prevImage();
+  }
+}, { passive: true });
+
     els.lightboxStage.addEventListener("touchstart", function(event) {
       touchStartX = event.changedTouches[0].screenX;
     }, { passive: true });
