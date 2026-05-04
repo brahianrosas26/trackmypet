@@ -472,33 +472,40 @@
     }
 
 .edit-btn {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 50%;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: auto;
+      height: 42px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 13px;
+      background: rgba(255,255,255,0.18);
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      z-index: 4;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-weight: 850;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
 
-  background: rgba(0, 0, 0, 0.45);
-  color: white;
-  cursor: pointer;
-  z-index: 5;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 22px rgba(0,0,0,0.25);
-  border: none;
-}
-
-.edit-btn::before {
-  content: "✎";
-  font-size: 25px;
-  line-height: 1;
-}
+    .edit-btn::before {
+      content: "✎";
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.18);
+      font-size: 13px;
+      line-height: 1;
+    }
 
 .edit-btn:active {
   transform: scale(0.95);
@@ -758,7 +765,7 @@
     <section id="profileScreen" class="screen">
       <div class="card">
         <div class="top">
-          <button class="edit-btn" id="openPinScreen" aria-label="Editar información"><span>Editar></span></button>
+          <button class="edit-btn" id="openPinScreen" aria-label="Editar información"><span>Editar</span></button>
           <button class="carousel-arrow left" id="prevPhoto" type="button" aria-label="Foto anterior"><span>‹</span></button>
           <div class="pet-photo carousel-photo" id="profilePhoto">🐶</div>
           <button class="carousel-arrow right" id="nextPhoto" type="button" aria-label="Foto siguiente"><span>›</span></button>
