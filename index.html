@@ -1078,7 +1078,11 @@ window.currentPhotos = currentPhotos;
         return;
       }
 
-      els.profilePhoto.innerHTML = '<img src="' + currentPhotos[currentPhotoIndex] + '" alt="Foto de ' + petName + '">';
+      els.profilePhoto.addEventListener("click", function() {
+  if (window.openZoomGallery) {
+    window.openZoomGallery();
+  }
+});
 
       window.currentPhotos = currentPhotos;
 window.currentPhotoIndex = currentPhotoIndex;
