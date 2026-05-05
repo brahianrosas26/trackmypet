@@ -655,6 +655,8 @@
   }
 }
   </style>
+<link rel="stylesheet" href="https://unpkg.com/photoswipe@5/dist/photoswipe.css">
+  
 </head>
 
 <body>
@@ -872,6 +874,9 @@
     let currentPhotoIndex = 0;
     let currentPhotos = [];
 
+    window.currentPhotoIndex = currentPhotoIndex;
+window.currentPhotos = currentPhotos;
+
     const screens = {
       activation: document.getElementById("activationScreen"),
       profile: document.getElementById("profileScreen"),
@@ -1075,6 +1080,9 @@
 
       els.profilePhoto.innerHTML = '<img src="' + currentPhotos[currentPhotoIndex] + '" alt="Foto de ' + petName + '">';
 
+      window.currentPhotos = currentPhotos;
+window.currentPhotoIndex = currentPhotoIndex;
+
       const showControls = currentPhotos.length > 1;
       els.prevPhoto.style.display = showControls ? "block" : "none";
       els.nextPhoto.style.display = showControls ? "block" : "none";
@@ -1115,19 +1123,25 @@
       }).join("");
     }
 
-    function nextImage() {
-      if (!currentPhotos.length) return;
-      currentPhotoIndex = (currentPhotoIndex + 1) % currentPhotos.length;
-      renderCarousel(els.profileName.textContent || "mascota");
-      renderLightbox();
-    }
+function nextImage() {
+  if (!currentPhotos.length) return;
 
-    function prevImage() {
-      if (!currentPhotos.length) return;
-      currentPhotoIndex = (currentPhotoIndex - 1 + currentPhotos.length) % currentPhotos.length;
-      renderCarousel(els.profileName.textContent || "mascota");
-      renderLightbox();
-    }
+  currentPhotoIndex = (currentPhotoIndex + 1) % currentPhotos.length;
+  window.currentPhotoIndex = currentPhotoIndex; // 👈 AGREGAR
+
+  renderCarousel(els.profileName.textContent || "mascota");
+  renderLightbox();
+}
+
+function prevImage() {
+  if (!currentPhotos.length) return;
+
+  currentPhotoIndex = (currentPhotoIndex - 1 + currentPhotos.length) % currentPhotos.length;
+  window.currentPhotoIndex = currentPhotoIndex; // 👈 AGREGAR
+
+  renderCarousel(els.profileName.textContent || "mascota");
+  renderLightbox();
+}
 
     async function fillEditForm() {
       const data = await getPetData();
@@ -1323,5 +1337,25 @@ els.profilePhoto.addEventListener("touchend", function(event) {
 
     showLandingOrTag();
   </script>
+  <script type="module">
+  import PhotoSwipe from "https://unpkg.com/photoswipe@5/dist/photoswipe.esm.js";
+
+  window.openZoomGallery = function() {
+    if (!window.currentPhotos || !window.currentPhotos.length) return;
+
+    const pswp = new PhotoSwipe({
+      dataSource: window.currentPhotos.map(function(src) {
+        return {
+          src: src,
+          width: 1600,
+          height: 1000
+        };
+      }),
+      index: window.currentPhotoIndex || 0
+    });
+
+    pswp.init();
+  };
+</script>
 </body>
 </html>
