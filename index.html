@@ -984,18 +984,20 @@
 
     // 🔥 COMPRESIÓN
     const compressedFile = await imageCompression(originalFile, {
-      maxSizeMB: 0.2,
-      maxWidthOrHeight: 800,
+      maxSizeMB: 0.12,
+      maxWidthOrHeight: 1000,
+      initialquality: 0.8,
+      fileType: "image/webp"
       useWebWorker: true
     });
 
-    const path = tagCode + "/" + Date.now() + "-" + i + ".jpg";
+    const path = tagCode + "/" + Date.now() + "-" + i + ".webp";
 
     const { error } = await db.storage
       .from(STORAGE_BUCKET)
       .upload(path, compressedFile, {
         upsert: true,
-        contentType: "image/jpeg"
+        contentType: "image/webp"
       });
 
     if (error) {
