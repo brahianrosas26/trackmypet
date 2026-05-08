@@ -1004,16 +1004,6 @@
       return null;
     }
 
-    const { data } = db.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(path);
-
-    urls.push(data.publicUrl);
-  }
-
-  return urls;
-}
-
         const { data } = db.storage
           .from(STORAGE_BUCKET)
           .getPublicUrl(path);
