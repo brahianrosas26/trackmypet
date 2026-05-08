@@ -976,23 +976,43 @@
     }
 
     async function uploadPhotos(fileList) {
-      const files = Array.from(fileList || []).slice(0, 3);
-      const urls = [];
+  const files = Array.from(fileList || []).slice(0, 3);
+  const urls = [];
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = tagCode + "/" + Date.now() + "-" + i + "." + ext;
+  for (let i = 0; i < files.length; i++) {
+    const originalFile = files[i];
 
-        const { error } = await db.storage
-          .from(STORAGE_BUCKET)
-          .upload(path, file, { upsert: true });
+    // 🔥 COMPRESIÓN
+    const compressedFile = await imageCompression(originalFile, {
+      maxSizeMB: 0.12,
+      maxWidthOrHeight: 1000,
+      useWebWorker: true
+    });
 
-        if (error) {
-          console.error("Error subiendo foto:", error);
-          alert("No se pudo subir una foto. Revisá el bucket de Supabase Storage.");
-          return null;
-        }
+    const path = tagCode + "/" + Date.now() + "-" + i + ".jpg";
+
+    const { error } = await db.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, compressedFile, {
+        upsert: true,
+        contentType: "image/jpeg"
+      });
+
+    if (error) {
+      console.error("Error subiendo foto:", error);
+      alert("No se pudo subir una foto.");
+      return null;
+    }
+
+    const { data } = db.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(path);
+
+    urls.push(data.publicUrl);
+  }
+
+  return urls;
+}
 
         const { data } = db.storage
           .from(STORAGE_BUCKET)
