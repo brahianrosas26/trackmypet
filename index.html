@@ -984,8 +984,9 @@
 
     // 🔥 COMPRESIÓN
     const compressedFile = await imageCompression(originalFile, {
-      maxSizeMB: 0.18,
-      maxWidthOrHeight: 1200,
+      maxSizeMB: 0.14,
+      maxWidthOrHeight: 1400,
+      initialQuality: 0.78,
       useWebWorker: true
     });
 
