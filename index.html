@@ -660,6 +660,45 @@
     padding-top: 76px;
   }
 }
+    .photo-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.photo-slot {
+  position: relative;
+  height: 92px;
+  border-radius: 18px;
+  background: #f5f6f3;
+  border: 1px dashed var(--border);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.photo-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.65);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+}
   </style>
 </head>
 
@@ -831,8 +870,11 @@
             <div class="field"><label for="editOwnerPhone">Teléfono / WhatsApp</label><input id="editOwnerPhone" type="tel" required /></div>
             <div class="field"><label for="editPetZone">Zona o barrio</label><input id="editPetZone" type="text" /></div>
             <div class="field"><label for="editPetInfo">Información importante</label><textarea id="editPetInfo"></textarea></div>
-            <div class="field"><label for="editPetPhotos">Cambiar fotos, hasta 3</label><input id="editPetPhotos" type="file" accept="image/*" multiple /></div>
-            <button class="btn btn-primary" type="submit">Guardar cambios</button>
+<div class="field">
+  <label>Fotos actuales, máximo 3</label>
+  <div class="photo-editor-grid" id="editPhotoBoxes"></div>
+  <input id="editPetPhotos" type="file" accept="image/*" style="display:none" />
+</div>            <button class="btn btn-primary" type="submit">Guardar cambios</button>
           </form>
 
           <p class="note">Si no elegís fotos nuevas, se mantienen las anteriores.</p>
@@ -879,6 +921,11 @@
     let currentPhotoIndex = 0;
     let currentPhotos = [];
 
+let editPhotoUrls = [null, null, null];
+let editPhotoFiles = [null, null, null];
+let editDeletedUrls = [];
+let selectedPhotoSlot = null;
+    
     const screens = {
       activation: document.getElementById("activationScreen"),
       profile: document.getElementById("profileScreen"),
@@ -918,6 +965,7 @@
       editPetZone: document.getElementById("editPetZone"),
       editPetInfo: document.getElementById("editPetInfo"),
       editPetPhotos: document.getElementById("editPetPhotos"),
+      editPhotoBoxes: document.getElementById("editPhotoBoxes"),
       editSuccess: document.getElementById("editSuccess"),
       lightbox: document.getElementById("lightbox"),
       lightboxImage: document.getElementById("lightboxImage"),
@@ -1060,9 +1108,9 @@ async function uploadPhotos(fileList) {
           telefono: data.phone,
           zona: data.zone,
           info: data.info,
-          foto1: data.photos[0] || data.oldPhotos?.[0] || null,
-          foto2: data.photos[1] || data.oldPhotos?.[1] || null,
-          foto3: data.photos[2] || data.oldPhotos?.[2] || null,
+foto1: data.exactPhotos ? (data.photos[0] || null) : (data.photos[0] || data.oldPhotos?.[0] || null),
+foto2: data.exactPhotos ? (data.photos[1] || null) : (data.photos[1] || data.oldPhotos?.[1] || null),
+foto3: data.exactPhotos ? (data.photos[2] || null) : (data.photos[2] || data.oldPhotos?.[2] || null),
           updated_at: new Date().toISOString()
         })
         .eq("codigo", tagCode);
@@ -1182,6 +1230,63 @@ async function uploadPhotos(fileList) {
       renderLightbox();
     }
 
+function renderEditPhotoBoxes() {
+  els.editPhotoBoxes.innerHTML = editPhotoUrls.map(function(url, index) {
+    if (url) {
+      return `
+        <div class="photo-slot" data-index="${index}">
+          <img src="${url}" alt="Foto ${index + 1}">
+          <button class="photo-remove" type="button" data-remove="${index}">×</button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="photo-slot" data-index="${index}">
+        +
+      </div>
+    `;
+  }).join("");
+}
+
+els.editPhotoBoxes.addEventListener("click", function(event) {
+  const removeBtn = event.target.closest("[data-remove]");
+
+  if (removeBtn) {
+    const index = Number(removeBtn.dataset.remove);
+
+    if (editPhotoUrls[index]) {
+      editDeletedUrls.push(editPhotoUrls[index]);
+    }
+
+    editPhotoUrls[index] = null;
+    editPhotoFiles[index] = null;
+    renderEditPhotoBoxes();
+    return;
+  }
+
+  const slot = event.target.closest(".photo-slot");
+  if (!slot) return;
+
+  selectedPhotoSlot = Number(slot.dataset.index);
+  els.editPetPhotos.value = "";
+  els.editPetPhotos.click();
+});
+
+els.editPetPhotos.addEventListener("change", function() {
+  const file = els.editPetPhotos.files[0];
+  if (!file || selectedPhotoSlot === null) return;
+
+  if (editPhotoUrls[selectedPhotoSlot]) {
+    editDeletedUrls.push(editPhotoUrls[selectedPhotoSlot]);
+  }
+
+  editPhotoFiles[selectedPhotoSlot] = file;
+  editPhotoUrls[selectedPhotoSlot] = URL.createObjectURL(file);
+
+  renderEditPhotoBoxes();
+});
+    
     async function fillEditForm() {
       const data = await getPetData();
       if (!data) return;
@@ -1191,6 +1296,10 @@ async function uploadPhotos(fileList) {
       els.editOwnerPhone.value = data.telefono || "";
       els.editPetZone.value = data.zona || "";
       els.editPetInfo.value = data.info || "";
+      editPhotoUrls = [data.foto1 || null, data.foto2 || null, data.foto3 || null];
+editPhotoFiles = [null, null, null];
+editDeletedUrls = [];
+renderEditPhotoBoxes();
     }
 
     els.activationForm.addEventListener("submit", async function(event) {
@@ -1277,18 +1386,32 @@ async function uploadPhotos(fileList) {
         return;
       }
 
-      let photos = [];
-if (els.editPetPhotos.files && els.editPetPhotos.files.length) {
+let finalPhotos = [...editPhotoUrls];
 
-  await deleteOldPhotos([
-    tag.foto1,
-    tag.foto2,
-    tag.foto3
-  ]);
+for (let i = 0; i < 3; i++) {
+  if (editPhotoFiles[i]) {
+    const uploaded = await uploadPhotos([editPhotoFiles[i]]);
 
-  const uploaded = await uploadPhotos(els.editPetPhotos.files);
-        if (uploaded === null) {
-          els.editForm.classList.remove("loading");
+    if (uploaded === null) {
+      els.editForm.classList.remove("loading");
+      return;
+    }
+
+    finalPhotos[i] = uploaded[0];
+  }
+}
+
+await deleteOldPhotos(editDeletedUrls);
+
+const ok = await savePetData({
+  name: els.editPetName.value.trim(),
+  sexo: els.editPetSex.value,
+  phone: els.editOwnerPhone.value.trim(),
+  zone: els.editPetZone.value.trim(),
+  info: els.editPetInfo.value.trim(),
+  photos: finalPhotos,
+  exactPhotos: true
+});
           return;
         }
         photos = uploaded;
