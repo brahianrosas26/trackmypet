@@ -975,8 +975,42 @@
       return data;
     }
 
-    async function uploadPhotos(fileList) {
-  const files = Array.from(fileList || []).slice(0, 3);
+function getStoragePathFromUrl(url) {
+  if (!url) return null;
+
+  const marker = "/storage/v1/object/public/" + STORAGE_BUCKET + "/";
+  const index = url.indexOf(marker);
+
+  if (index === -1) return null;
+
+  return decodeURIComponent(url.substring(index + marker.length));
+}
+
+async function deleteOldPhotos(photoUrls) {
+  const paths = (photoUrls || [])
+    .map(getStoragePathFromUrl)
+    .filter(Boolean);
+
+  if (!paths.length) return;
+
+  const { error } = await db.storage
+    .from(STORAGE_BUCKET)
+    .remove(paths);
+
+  if (error) {
+    console.warn("No se pudieron borrar fotos viejas:", error);
+  }
+}
+    
+async function uploadPhotos(fileList) {
+  const selectedFiles = Array.from(fileList || []);
+
+  if (selectedFiles.length > 3) {
+    alert("Solo podés subir hasta 3 fotos.");
+    return null;
+  }
+
+  const files = selectedFiles.slice(0, 3);
   const urls = [];
 
   for (let i = 0; i < files.length; i++) {
@@ -1244,8 +1278,15 @@
       }
 
       let photos = [];
-      if (els.editPetPhotos.files && els.editPetPhotos.files.length) {
-        const uploaded = await uploadPhotos(els.editPetPhotos.files);
+if (els.editPetPhotos.files && els.editPetPhotos.files.length) {
+
+  await deleteOldPhotos([
+    tag.foto1,
+    tag.foto2,
+    tag.foto3
+  ]);
+
+  const uploaded = await uploadPhotos(els.editPetPhotos.files);
         if (uploaded === null) {
           els.editForm.classList.remove("loading");
           return;
