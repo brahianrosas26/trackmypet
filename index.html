@@ -1412,22 +1412,6 @@ const ok = await savePetData({
   photos: finalPhotos,
   exactPhotos: true
 });
-          return;
-        }
-        photos = uploaded;
-      }
-
-      const oldPhotos = [tag.foto1, tag.foto2, tag.foto3].filter(Boolean);
-
-      const ok = await savePetData({
-        name: els.editPetName.value.trim(),
-        sexo: els.editPetSex.value,
-        phone: els.editOwnerPhone.value.trim(),
-        zone: els.editPetZone.value.trim(),
-        info: els.editPetInfo.value.trim(),
-        photos,
-        oldPhotos
-      });
 
       els.editForm.classList.remove("loading");
       if (!ok) return;
