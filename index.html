@@ -1069,11 +1069,11 @@ async function uploadPhotos(fileList) {
       maxSizeMB: 0.12,
       maxWidthOrHeight: 1500,
       initialQuality: 0.8,
-      fileType: "image/jpeg",
+      fileType: "image/webp",
       useWebWorker: true
     });
 
-    const path = tagCode + "/" + Date.now() + "-" + i + ".jpeg";
+    const path = tagCode + "/" + Date.now() + "-" + i + ".webp";
 
     const { error } = await db.storage
       .from(STORAGE_BUCKET)
