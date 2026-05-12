@@ -1067,7 +1067,7 @@ async function uploadPhotos(fileList) {
     // 🔥 COMPRESIÓN
     const compressedFile = await imageCompression(originalFile, {
       maxSizeMB: 0.12,
-      maxWidthOrHeight: 1600,
+      maxWidthOrHeight: 1500,
       initialQuality: 0.8,
       fileType: "image/jpeg",
       useWebWorker: true
