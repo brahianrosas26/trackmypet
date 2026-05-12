@@ -1073,7 +1073,7 @@ async function uploadPhotos(fileList) {
       useWebWorker: true
     });
 
-    const path = tagCode + "/" + Date.now() + "-" + i + ".webpp";
+    const path = tagCode + "/" + Date.now() + "-" + i + ".webp";
 
     const { error } = await db.storage
       .from(STORAGE_BUCKET)
