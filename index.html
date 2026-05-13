@@ -705,67 +705,7 @@
 </head>
 
 <body>
-  <!-- PÁGINA PRINCIPAL: trackmypet.uy -->
-  <main id="landingPage" class="landing">
-    <div class="container">
-      <header class="nav">
-        <a class="brand" href="/">
-          <span class="brand-mark">🐾</span>
-          <span>TrackMyPet</span>
-        </a>
-        <a class="btn btn-primary" href="https://wa.me/598XXXXXXXX?text=Hola%2C%20quiero%20comprar%20un%20TAG%20QR" target="_blank" rel="noopener">Comprar</a>
-      </header>
-
-      <section class="hero">
-        <div>
-          <span class="pill">TAG QR para mascotas</span>
-          <h1>Ayudá a que tu mascota vuelva a casa.</h1>
-          <p>
-            Un TAG con código QR que lleva a una ficha online con fotos, teléfono, WhatsApp y datos importantes de tu mascota.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="https://wa.me/598XXXXXXXX?text=Hola%2C%20quiero%20comprar%20un%20TAG%20QR" target="_blank" rel="noopener">Comprar por WhatsApp</a>
-            <a class="btn btn-soft" href="/000000">Ver ejemplo</a>
-          </div>
-        </div>
-
-        <div class="mock-card">
-          <div class="mock-phone">
-            <div class="mock-content">
-              <span class="status">Estoy perdido/a</span>
-              <h2>Luna</h2>
-              <p style="color:rgba(255,255,255,.75); margin-bottom:14px;">Si me encontraste, contactá a mi familia.</p>
-              <div class="actions">
-                <span class="btn btn-primary">WhatsApp</span>
-                <span class="btn btn-dark">Llamar</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <h2>Cómo funciona</h2>
-        <p class="section-text">Simple, sin app y pensado para que cualquiera pueda ayudar.</p>
-
-        <div class="grid-3">
-          <article class="info-card">
-            <h3>1. Comprás el TAG</h3>
-            <p>Cada TAG viene con un código QR único y un PIN privado dentro del embalaje.</p>
-          </article>
-          <article class="info-card">
-            <h3>2. Activás con PIN</h3>
-            <p>Escaneás el QR, cargás los datos de tu mascota y subís fotos desde el celular.</p>
-          </article>
-          <article class="info-card">
-            <h3>3. Te contactan</h3>
-            <p>Si alguien encuentra a tu mascota, escanea el QR y puede llamarte o escribirte por WhatsApp.</p>
-          </article>
-        </div>
-      </section>
-    </div>
-  </main>
-
+  
   <!-- PÁGINAS INTERNAS: trackmypet.uy/258645 -->
   <main id="qrApp" class="qr-app">
     <a class="tag-header-logo" href="https://inicio-track-my-pet.vercel.app/">
@@ -923,7 +863,6 @@ Identificación QR para mascotas.</p>
     const isTagPage = /^[0-9]{4,10}$/.test(pathCode);
     const tagCode = isTagPage ? pathCode : null;
 
-    const landingPage = document.getElementById("landingPage");
     const qrApp = document.getElementById("qrApp");
 
     let currentPhotoIndex = 0;
@@ -991,18 +930,15 @@ let selectedActivationSlot = null;
       backToProfileFromEdit: document.getElementById("backToProfileFromEdit")
     };
 
-    function showLandingOrTag() {
-      if (isTagPage) {
-        landingPage.classList.remove("active");
-        qrApp.classList.add("active");
-        document.title = "TAG " + tagCode + " | TrackMyPet";
-        renderProfile();
-      } else {
-        qrApp.classList.remove("active");
-        landingPage.classList.add("active");
-        document.title = "TrackMyPet | TAG QR para mascotas";
-      }
-    }
+function showLandingOrTag() {
+  if (isTagPage) {
+    qrApp.classList.add("active");
+    document.title = "TAG " + tagCode + " | TrackMyPet";
+    renderProfile();
+  } else {
+    window.location.href = "https://inicio-track-my-pet.vercel.app/";
+  }
+}
 
     function showScreen(name) {
       Object.values(screens).forEach(function(screen) {
