@@ -1185,6 +1185,9 @@ foto3: data.exactPhotos ? (data.photos[2] || null) : (data.photos[2] || data.old
 
 function renderActivationPhotoBoxes() {
   els.activationPhotoBoxes.innerHTML = activationPhotoPreviews.map(function(url, index) {
+   
+    if(index > 0) return "";
+    
     if (url) {
       return `
         <div class="photo-slot" data-index="${index}">
@@ -1235,6 +1238,9 @@ els.petPhotos.addEventListener("change", function() {
     
 function renderEditPhotoBoxes() {
   els.editPhotoBoxes.innerHTML = editPhotoUrls.map(function(url, index) {
+
+    if(index > 0) return "";
+    
     if (url) {
       return `
         <div class="photo-slot" data-index="${index}">
