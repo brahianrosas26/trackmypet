@@ -664,7 +664,7 @@
 }
     .photo-editor-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
@@ -682,6 +682,10 @@
   cursor: pointer;
 }
 
+.photo-slot:nth-chil(n+2){
+  displat:none;
+}
+    
 .photo-slot img {
   width: 100%;
   height: 100%;
