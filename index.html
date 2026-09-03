@@ -720,13 +720,31 @@
         <div class="top"><div class="pet-photo">🐾</div></div>
         <div class="body">
           <h2>Activá tu TAG</h2>
-          <p class="subtitle">Ingresá el PIN que viene en el embalaje y completá la información de tu mascota.</p>
+          <p class="subtitle">Ingresá el PIN que viene en el embalaje para comenzar la activación.</p>
 
           <div id="activationError" class="error">PIN incorrecto. Revisá el PIN del sobre.</div>
-          <div id="activationSuccess" class="success">TAG activado correctamente.</div>
 
           <form class="form" id="activationForm">
             <div class="field"><label for="activationPin">PIN del TAG</label><input id="activationPin" type="password" inputmode="numeric" placeholder="Ej: 8472" required /></div>
+            <button class="btn btn-primary" type="submit">Activar TAG</button>
+          </form>
+
+          <p class="note">El PIN sirve para activar y editar. No lo compartas públicamente.</p>
+        </div>
+      </div>
+      <p class="footer-text">TrackMyPet · Identificación QR para mascotas</p>
+    </section>
+
+    <section id="petSetupScreen" class="screen">
+      <div class="card">
+        <div class="body">
+          <div class="mini-header"><button class="back-btn" id="backToActivation">← Volver</button></div>
+          <h2>Datos de tu mascota</h2>
+          <p class="subtitle">Completá la información que verá quien escanee el QR.</p>
+
+          <div id="activationSuccess" class="success">TAG activado correctamente.</div>
+
+          <form class="form" id="petSetupForm">
             <div class="field"><label for="petName">Nombre de la mascota</label><input id="petName" type="text" placeholder="Ej: Luna" required /></div>
             <div class="field">
               <label for="petSex">Sexo</label>
@@ -739,14 +757,13 @@
             <div class="field"><label for="ownerPhone">Teléfono / WhatsApp</label><input id="ownerPhone" type="tel" placeholder="Ej: 099 123 456" required /></div>
             <div class="field"><label for="petZone">Zona o barrio</label><input id="petZone" type="text" placeholder="Ej: Prado, Montevideo" /></div>
             <div class="field"><label for="petInfo">Información importante</label><textarea id="petInfo" placeholder="Ej: Es nerviosa, no muerde, toma medicación..."></textarea></div>
-<div class="field">
-  <label>Foto actual de tu mascota</label>
-  <div class="photo-editor-grid" id="activationPhotoBoxes"></div>
-  <input id="petPhotos" type="file" accept="image/*" style="display:none" />
-</div>            <button class="btn btn-primary" type="submit">Activar TAG</button>
+            <div class="field">
+              <label>Foto actual de tu mascota</label>
+              <div class="photo-editor-grid" id="activationPhotoBoxes"></div>
+              <input id="petPhotos" type="file" accept="image/*" style="display:none" />
+            </div>
+            <button class="btn btn-primary" type="submit">Guardar y activar TAG</button>
           </form>
-
-          <p class="note">El PIN sirve para activar y editar. No lo compartas públicamente.</p>
         </div>
       </div>
       <p class="footer-text">TrackMyPet · Identificación QR para mascotas</p>
@@ -880,9 +897,11 @@ let selectedPhotoSlot = null;
     let activationPhotoFiles = [null, null, null];
 let activationPhotoPreviews = [null, null, null];
 let selectedActivationSlot = null;
+let activationPinVerified = false;
     
     const screens = {
       activation: document.getElementById("activationScreen"),
+      petSetup: document.getElementById("petSetupScreen"),
       profile: document.getElementById("profileScreen"),
       pin: document.getElementById("pinScreen"),
       edit: document.getElementById("editScreen")
@@ -890,6 +909,7 @@ let selectedActivationSlot = null;
 
     const els = {
       activationForm: document.getElementById("activationForm"),
+      petSetupForm: document.getElementById("petSetupForm"),
       activationPin: document.getElementById("activationPin"),
       petName: document.getElementById("petName"),
       petSex: document.getElementById("petSex"),
@@ -900,6 +920,7 @@ let selectedActivationSlot = null;
       activationPhotoBoxes: document.getElementById("activationPhotoBoxes"),
       activationError: document.getElementById("activationError"),
       activationSuccess: document.getElementById("activationSuccess"),
+      backToActivation: document.getElementById("backToActivation"),
       profilePhoto: document.getElementById("profilePhoto"),
       prevPhoto: document.getElementById("prevPhoto"),
       nextPhoto: document.getElementById("nextPhoto"),
@@ -1315,7 +1336,6 @@ renderEditPhotoBoxes();
       event.preventDefault();
 
       els.activationError.style.display = "none";
-      els.activationSuccess.style.display = "none";
       els.activationForm.classList.add("loading");
 
       const tag = await getPetData();
@@ -1340,9 +1360,42 @@ renderEditPhotoBoxes();
         return;
       }
 
+      activationPinVerified = true;
+      els.activationForm.classList.remove("loading");
+      showScreen("petSetup");
+    });
+
+    els.petSetupForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      if (!activationPinVerified) {
+        showScreen("activation");
+        return;
+      }
+
+      els.activationSuccess.style.display = "none";
+      els.petSetupForm.classList.add("loading");
+
+      const tag = await getPetData();
+      if (!tag || tag.activo) {
+        els.petSetupForm.classList.remove("loading");
+        renderProfile();
+        return;
+      }
+
+      // Volvemos a comprobar el PIN antes de guardar, por seguridad dentro del flujo actual.
+      if (els.activationPin.value.trim() !== tag.pin) {
+        activationPinVerified = false;
+        els.petSetupForm.classList.remove("loading");
+        els.activationError.textContent = "El PIN ya no pudo validarse. Ingresalo nuevamente.";
+        els.activationError.style.display = "block";
+        showScreen("activation");
+        return;
+      }
+
       const photos = await uploadPhotos(activationPhotoFiles.filter(Boolean));
       if (photos === null) {
-        els.activationForm.classList.remove("loading");
+        els.petSetupForm.classList.remove("loading");
         return;
       }
 
@@ -1355,11 +1408,17 @@ renderEditPhotoBoxes();
         photos
       });
 
-      els.activationForm.classList.remove("loading");
+      els.petSetupForm.classList.remove("loading");
       if (!ok) return;
 
+      activationPinVerified = false;
       els.activationSuccess.style.display = "block";
       setTimeout(renderProfile, 600);
+    });
+
+    els.backToActivation.addEventListener("click", function() {
+      activationPinVerified = false;
+      showScreen("activation");
     });
 
     els.openPinScreen.addEventListener("click", function() {
