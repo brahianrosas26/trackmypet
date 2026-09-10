@@ -1,5 +1,8 @@
 {
-  "rewrites": [
-    { "source": "/:path*", "destination": "/index.html" }
-  ]
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api/.*", "status": 404 },
+    { "src": "/.*", "dest": "/index.html" }
+  ],
+  "functions": { "api/tag.js": { "maxDuration": 30 } }
 }
