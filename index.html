@@ -868,17 +868,53 @@ Identificación QR para mascotas.</p>
     <div class="lightbox-dots" id="lightboxDots"></div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
   <script>
-    // 1) Pegá acá tus datos de Supabase
-    const SUPABASE_URL = "https://ohoklhgivqjqtkqzrrhi.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ob2tsaGdpdnFqcXRrcXpycmhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MDkwMTIsImV4cCI6MjA5MzE4NTAxMn0.4cmzA3vummkVU6c-MvStw_s_IVZipXsnypYzWV12ywA";
+    let ownerSession = null;
+    let ownerVersion = null;
+    let saveMode = null;
 
-    // 2) Nombre del bucket de Storage que vas a crear en Supabase
-    const STORAGE_BUCKET = "pet-photos";
+    async function api(action, payload = {}) {
+      const response = await fetch(action === 'get' ? '/api/tag?code=' + encodeURIComponent(tagCode) : '/api/tag', {
+        method: action === 'get' ? 'GET' : 'POST',
+        cache: 'no-store',
+        headers: action === 'get' ? {} : {
+          'Content-Type': 'application/json',
+          ...(ownerSession ? { Authorization: 'Bearer ' + ownerSession } : {})
+        },
+        body: action === 'get' ? undefined : JSON.stringify({ action, code: tagCode, ...payload })
+      });
+      let result;
+      try { result = await response.json(); } catch { throw new Error('No se pudo conectar. Intentá nuevamente.'); }
+      if (!response.ok) {
+        if (response.status === 401) ownerSession = null;
+        const error = new Error(result.error || 'No se pudo completar la operación.');
+        error.status = response.status;
+        throw error;
+      }
+      return result;
+    }
 
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    async function verifyPin(pin, purpose) {
+      const result = await api('verify', { pin: pin.trim(), purpose });
+      ownerSession = result.token;
+      ownerVersion = result.data.updated_at ?? null;
+      saveMode = purpose;
+      return result.data;
+    }
+
+    function escapeAttribute(value) {
+      return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[c]));
+    }
+
+    function imageBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1]);
+        reader.onerror = () => reject(new Error('No se pudo leer la foto.'));
+        reader.readAsDataURL(blob);
+      });
+    }
 
     const pathCode = window.location.pathname.replace("/", "").trim();
     const isTagPage = /^[0-9]{4,10}$/.test(pathCode);
@@ -982,124 +1018,43 @@ function showLandingOrTag() {
 
     async function getPetData() {
       if (!tagCode) return null;
-
-      const { data, error } = await db
-        .from("tags")
-        .select("*")
-        .eq("codigo", tagCode)
-        .single();
-
-      if (error) {
-        console.error("Error leyendo TAG:", error);
-        return null;
-      }
-
-      return data;
+      try { return (await api('get')).data; }
+      catch (error) { if (error.status === 404) return null; throw error; }
     }
 
-function getStoragePathFromUrl(url) {
-  if (!url) return null;
-
-  const marker = "/storage/v1/object/public/" + STORAGE_BUCKET + "/";
-  const index = url.indexOf(marker);
-
-  if (index === -1) return null;
-
-  return decodeURIComponent(url.substring(index + marker.length));
-}
-
-async function deleteOldPhotos(photoUrls) {
-  const paths = (photoUrls || [])
-    .map(getStoragePathFromUrl)
-    .filter(Boolean);
-
-  if (!paths.length) return;
-
-  const { error } = await db.storage
-    .from(STORAGE_BUCKET)
-    .remove(paths);
-
-  if (error) {
-    console.warn("No se pudieron borrar fotos viejas:", error);
-  }
-}
-    
-async function uploadPhotos(fileList) {
-  const selectedFiles = Array.from(fileList || []);
-
-  if (selectedFiles.length > 3) {
-    alert("Solo podés subir hasta 3 fotos.");
-    return null;
-  }
-
-  const files = selectedFiles.slice(0, 3);
-  const urls = [];
-
-  for (let i = 0; i < files.length; i++) {
-    const originalFile = files[i];
-
-    // 🔥 COMPRESIÓN
-    const compressedFile = await imageCompression(originalFile, {
-      maxSizeMB: 0.12,
-      maxWidthOrHeight: 1000,
-      initialQuality: 0.8,
-      fileType: "image/jpeg",
-      useWebWorker: true
-    });
-
-    const path = tagCode + "/" + Date.now() + "-" + i + ".jpeg";
-
-    const { error } = await db.storage
-      .from(STORAGE_BUCKET)
-      .upload(path, compressedFile, {
-        upsert: true,
-        contentType: "image/jpeg"
-      });
-
-    if (error) {
-      console.error("Error subiendo foto:", error);
-      alert("No se pudo subir una foto.");
-      return null;
-    }
-
-        const { data } = db.storage
-          .from(STORAGE_BUCKET)
-          .getPublicUrl(path);
-
-        urls.push(data.publicUrl);
+    async function uploadPhotos(fileList) {
+      const files = Array.from(fileList || []);
+      if (files.length > 3) throw new Error('Solo podés subir hasta 3 fotos.');
+      const urls = [];
+      for (const file of files) {
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 0.12, maxWidthOrHeight: 1000, initialQuality: 0.8,
+          fileType: 'image/jpeg', useWebWorker: true
+        });
+        const uploaded = await api('upload', { image: await imageBase64(compressedFile) });
+        urls.push(uploaded.url);
       }
-
       return urls;
     }
 
     async function savePetData(data) {
-      const { error } = await db
-        .from("tags")
-        .update({
-          activo: true,
-          sexo: data.sexo,
-          nombre: data.name,
-          telefono: data.phone,
-          zona: data.zone,
-          info: data.info,
-foto1: data.exactPhotos ? (data.photos[0] || null) : (data.photos[0] || data.oldPhotos?.[0] || null),
-foto2: data.exactPhotos ? (data.photos[1] || null) : (data.photos[1] || data.oldPhotos?.[1] || null),
-foto3: data.exactPhotos ? (data.photos[2] || null) : (data.photos[2] || data.oldPhotos?.[2] || null),
-          updated_at: new Date().toISOString()
-        })
-        .eq("codigo", tagCode);
-
-      if (error) {
-        console.error("Error guardando TAG:", error);
-        alert("Error al guardar. Revisá permisos de Supabase/RLS.");
-        return false;
-      }
-
-      return true;
+      const result = await api('save', { data: {
+        nombre: data.name, sexo: data.sexo, telefono: data.phone, zona: data.zone,
+        info: data.info, photos: data.photos, updated_at: ownerVersion
+      }});
+      ownerVersion = result.data.updated_at;
+      return result.data;
     }
 
     async function renderProfile() {
-      const data = await getPetData();
+      let data;
+      try { data = await getPetData(); }
+      catch (error) {
+        els.activationError.textContent = error.message;
+        els.activationError.style.display = 'block';
+        showScreen('activation');
+        return;
+      }
 
       if (!data) {
         els.activationError.textContent = "Este TAG no existe o todavía no fue creado.";
@@ -1148,7 +1103,10 @@ foto3: data.exactPhotos ? (data.photos[2] || null) : (data.photos[2] || data.old
         return;
       }
 
-      els.profilePhoto.innerHTML = '<img src="' + currentPhotos[currentPhotoIndex] + '" alt="Foto de ' + petName + '">';
+      const image = document.createElement('img');
+      image.src = currentPhotos[currentPhotoIndex];
+      image.alt = 'Foto de ' + petName;
+      els.profilePhoto.replaceChildren(image);
 
       const showControls = currentPhotos.length > 1;
       els.prevPhoto.style.display = showControls ? "block" : "none";
@@ -1212,7 +1170,7 @@ function renderActivationPhotoBoxes() {
     if (url) {
       return `
         <div class="photo-slot" data-index="${index}">
-          <img src="${url}" alt="Foto ${index + 1}">
+          <img src="${escapeAttribute(url)}" alt="Foto ${index + 1}">
           <button class="photo-remove" type="button" data-remove="${index}">×</button>
         </div>
       `;
@@ -1265,7 +1223,7 @@ function renderEditPhotoBoxes() {
     if (url) {
       return `
         <div class="photo-slot" data-index="${index}">
-          <img src="${url}" alt="Foto ${index + 1}">
+          <img src="${escapeAttribute(url)}" alt="Foto ${index + 1}">
           <button class="photo-remove" type="button" data-remove="${index}">×</button>
         </div>
       `;
@@ -1317,8 +1275,7 @@ els.editPetPhotos.addEventListener("change", function() {
   renderEditPhotoBoxes();
 });
     
-    async function fillEditForm() {
-      const data = await getPetData();
+    async function fillEditForm(data) {
       if (!data) return;
 
       els.editPetName.value = data.nombre || "";
@@ -1332,160 +1289,94 @@ editDeletedUrls = [];
 renderEditPhotoBoxes();
     }
 
-    els.activationForm.addEventListener("submit", async function(event) {
+    els.activationForm.addEventListener('submit', async function(event) {
       event.preventDefault();
-
-      els.activationError.style.display = "none";
-      els.activationForm.classList.add("loading");
-
-      const tag = await getPetData();
-
-      if (!tag) {
-        els.activationForm.classList.remove("loading");
-        els.activationError.textContent = "Este TAG no existe.";
-        els.activationError.style.display = "block";
-        return;
-      }
-
-      if (tag.activo) {
-        els.activationForm.classList.remove("loading");
-        renderProfile();
-        return;
-      }
-
-      if (els.activationPin.value.trim() !== tag.pin) {
-        els.activationForm.classList.remove("loading");
-        els.activationError.textContent = "PIN incorrecto. Revisá el PIN del embalaje.";
-        els.activationError.style.display = "block";
-        return;
-      }
-
-      activationPinVerified = true;
-      els.activationForm.classList.remove("loading");
-      showScreen("petSetup");
-    });
-
-    els.petSetupForm.addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      if (!activationPinVerified) {
-        showScreen("activation");
-        return;
-      }
-
-      els.activationSuccess.style.display = "none";
-      els.petSetupForm.classList.add("loading");
-
-      const tag = await getPetData();
-      if (!tag || tag.activo) {
-        els.petSetupForm.classList.remove("loading");
-        renderProfile();
-        return;
-      }
-
-      // Volvemos a comprobar el PIN antes de guardar, por seguridad dentro del flujo actual.
-      if (els.activationPin.value.trim() !== tag.pin) {
+      if (els.activationForm.classList.contains('loading')) return;
+      els.activationError.style.display = 'none';
+      els.activationForm.classList.add('loading');
+      try {
+        await verifyPin(els.activationPin.value, 'activate');
+        els.activationPin.value = '';
+        activationPinVerified = true;
+        showScreen('petSetup');
+      } catch (error) {
         activationPinVerified = false;
-        els.petSetupForm.classList.remove("loading");
-        els.activationError.textContent = "El PIN ya no pudo validarse. Ingresalo nuevamente.";
-        els.activationError.style.display = "block";
-        showScreen("activation");
-        return;
-      }
-
-      const photos = await uploadPhotos(activationPhotoFiles.filter(Boolean));
-      if (photos === null) {
-        els.petSetupForm.classList.remove("loading");
-        return;
-      }
-
-      const ok = await savePetData({
-        name: els.petName.value.trim(),
-        sexo: els.petSex.value,
-        phone: els.ownerPhone.value.trim(),
-        zone: els.petZone.value.trim(),
-        info: els.petInfo.value.trim(),
-        photos
-      });
-
-      els.petSetupForm.classList.remove("loading");
-      if (!ok) return;
-
-      activationPinVerified = false;
-      els.activationSuccess.style.display = "block";
-      setTimeout(renderProfile, 600);
+        els.activationError.textContent = error.message;
+        els.activationError.style.display = 'block';
+      } finally { els.activationForm.classList.remove('loading'); }
     });
 
-    els.backToActivation.addEventListener("click", function() {
-      activationPinVerified = false;
-      showScreen("activation");
-    });
-
-    els.openPinScreen.addEventListener("click", function() {
-      els.pinError.style.display = "none";
-      els.editPin.value = "";
-      showScreen("pin");
-    });
-
-    els.pinForm.addEventListener("submit", async function(event) {
+    els.petSetupForm.addEventListener('submit', async function(event) {
       event.preventDefault();
-
-      els.pinError.style.display = "none";
-      const tag = await getPetData();
-
-      if (!tag || els.editPin.value.trim() !== tag.pin) {
-        els.pinError.style.display = "block";
-        return;
-      }
-
-      await fillEditForm();
-      showScreen("edit");
+      if (els.petSetupForm.classList.contains('loading')) return;
+      if (!activationPinVerified || !ownerSession || saveMode !== 'activate') { showScreen('activation'); return; }
+      els.activationSuccess.style.display = 'none';
+      els.petSetupForm.classList.add('loading');
+      try {
+        const photos = await uploadPhotos(activationPhotoFiles.filter(Boolean));
+        await savePetData({ name: els.petName.value.trim(), sexo: els.petSex.value,
+          phone: els.ownerPhone.value.trim(), zone: els.petZone.value.trim(), info: els.petInfo.value.trim(), photos });
+        activationPinVerified = false;
+        ownerSession = null;
+        els.activationSuccess.style.display = 'block';
+        setTimeout(renderProfile, 600);
+      } catch (error) { alert(error.message); }
+      finally { els.petSetupForm.classList.remove('loading'); }
     });
 
-    els.editForm.addEventListener("submit", async function(event) {
+    els.backToActivation.addEventListener('click', function() {
+      activationPinVerified = false;
+      ownerSession = null;
+      showScreen('activation');
+    });
+
+    els.openPinScreen.addEventListener('click', function() {
+      ownerSession = null;
+      els.pinError.style.display = 'none';
+      els.editPin.value = '';
+      showScreen('pin');
+    });
+
+    els.pinForm.addEventListener('submit', async function(event) {
       event.preventDefault();
+      if (els.pinForm.classList.contains('loading')) return;
+      els.pinError.style.display = 'none';
+      els.pinForm.classList.add('loading');
+      try {
+        const data = await verifyPin(els.editPin.value, 'edit');
+        els.editPin.value = '';
+        await fillEditForm(data);
+        els.editSuccess.style.display = 'none';
+        showScreen('edit');
+      } catch (error) {
+        els.pinError.textContent = error.message;
+        els.pinError.style.display = 'block';
+      } finally { els.pinForm.classList.remove('loading'); }
+    });
 
-      els.editForm.classList.add("loading");
-
-      const tag = await getPetData();
-      if (!tag) {
-        els.editForm.classList.remove("loading");
-        alert("No se encontró este TAG.");
-        return;
-      }
-
-let finalPhotos = [...editPhotoUrls];
-
-for (let i = 0; i < 3; i++) {
-  if (editPhotoFiles[i]) {
-    const uploaded = await uploadPhotos([editPhotoFiles[i]]);
-
-    if (uploaded === null) {
-      els.editForm.classList.remove("loading");
-      return;
-    }
-
-    finalPhotos[i] = uploaded[0];
-  }
-}
-
-await deleteOldPhotos(editDeletedUrls);
-
-const ok = await savePetData({
-  name: els.editPetName.value.trim(),
-  sexo: els.editPetSex.value,
-  phone: els.editOwnerPhone.value.trim(),
-  zone: els.editPetZone.value.trim(),
-  info: els.editPetInfo.value.trim(),
-  photos: finalPhotos,
-  exactPhotos: true
-});
-
-      els.editForm.classList.remove("loading");
-      if (!ok) return;
-
-      els.editSuccess.style.display = "block";
-      setTimeout(renderProfile, 700);
+    els.editForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      if (els.editForm.classList.contains('loading')) return;
+      if (!ownerSession || saveMode !== 'edit') { showScreen('pin'); return; }
+      els.editForm.classList.add('loading');
+      els.editSuccess.style.display = 'none';
+      try {
+        const finalPhotos = [...editPhotoUrls];
+        for (let i = 0; i < 3; i++) {
+          if (editPhotoFiles[i]) {
+            const uploaded = await uploadPhotos([editPhotoFiles[i]]);
+            finalPhotos[i] = uploaded[0];
+            editPhotoUrls[i] = uploaded[0];
+            editPhotoFiles[i] = null;
+          }
+        }
+        await savePetData({ name: els.editPetName.value.trim(), sexo: els.editPetSex.value,
+          phone: els.editOwnerPhone.value.trim(), zone: els.editPetZone.value.trim(),
+          info: els.editPetInfo.value.trim(), photos: finalPhotos });
+        els.editSuccess.style.display = 'block';
+        setTimeout(renderProfile, 700);
+      } catch (error) { alert(error.message); }
+      finally { els.editForm.classList.remove('loading'); }
     });
 
     els.prevPhoto.addEventListener("click", function(event) {
@@ -1562,3 +1453,4 @@ renderActivationPhotoBoxes();
   </script>
 </body>
 </html>
+
