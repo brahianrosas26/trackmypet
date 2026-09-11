@@ -6,10 +6,11 @@ const { createHandler } = require('../api/tag');
 
 const base = { id:'test-id', codigo:'9999999999', pin:'001234', activo:false,
   nombre:'Luna', sexo:'hembra', telefono:'099123456', zona:'Prado', info:'',
-  foto1:null, foto2:null, foto3:null, updated_at:'2026-09-10T00:00:00.000Z' };
+  perdida:false, zona_perdida:'', mensaje_perdida:'', foto1:null, foto2:null, foto3:null, updated_at:'2026-09-10T00:00:00.000Z' };
 function fixture(options = {}) {
   const state = { tag:{...base,...options.tag}, calls:[], allowed:true, failSave:false, conflict:false, now:Date.parse('2026-09-10T01:00:00Z') };
-  const env = { SUPABASE_URL:'https://test.supabase.co', SUPABASE_SERVICE_ROLE_KEY:'test-only-not-a-real-key', ...options.env };
+  const env = { SUPABASE_URL:'https://test.supabase.co', SUPABASE_SERVICE_ROLE_KEY:'test-only-not-a-real-key',
+    TRACKMYPET_LOST_STATUS_ENABLED:'true', ...options.env };
   const handler = createHandler({env,now:()=>state.now,fetcher:async (url, init) => {
     const u = new URL(url);
     const payload = init.body && !(init.body instanceof Buffer) ? JSON.parse(init.body) : init.body;
@@ -33,7 +34,8 @@ function fixture(options = {}) {
     return res;
   }
   const verify = (purpose = state.tag.activo ? 'edit':'activate') => request({code:base.codigo,action:'verify',pin:base.pin,purpose});
-  const data = () => ({nombre:'Luna nueva',sexo:'hembra',telefono:'099123456',zona:'Prado',info:'',photos:[],updated_at:state.tag.updated_at});
+  const data = () => ({nombre:'Luna nueva',sexo:'hembra',telefono:'099123456',zona:'Prado',info:'',
+    perdida:false,zona_perdida:'',mensaje_perdida:'',photos:[],updated_at:state.tag.updated_at});
   return {state,request,verify,data};
 }
 test('public inactive response has no PIN, private id, draft contact or photo',async()=>{
@@ -46,6 +48,25 @@ test('active public response whitelists fields even if upstream leaks extra colu
   const f=fixture({tag:{activo:true,internal_secret:'secret'}});const r=await f.request({},null,'GET');
   assert.equal(r.body.data.nombre,'Luna');assert.equal(r.body.data.pin,undefined);assert.equal(r.body.data.id,undefined);
   assert.equal(r.body.data.internal_secret,undefined);
+  assert.equal(r.body.data.perdida,false);
+});
+test('owner can mark a pet lost and found without changing PIN, code or id',async()=>{
+  const f=fixture({tag:{activo:true}});const token=(await f.verify()).body.token;
+  let r=await f.request({code:base.codigo,action:'save',data:{...f.data(),perdida:true,
+    zona_perdida:'Parque Rodó',mensaje_perdida:'Se perdió el martes.'}},token);
+  assert.equal(r.code,200);assert.equal(r.body.data.perdida,true);assert.equal(r.body.data.zona_perdida,'Parque Rodó');
+  assert.equal(r.body.data.mensaje_perdida,'Se perdió el martes.');assert.equal(f.state.tag.pin,base.pin);
+  const nextToken=(await f.verify()).body.token;
+  r=await f.request({code:base.codigo,action:'save',data:{...f.data(),perdida:false}},nextToken);
+  assert.equal(r.code,200);assert.equal(r.body.data.perdida,false);assert.equal(f.state.tag.codigo,base.codigo);
+});
+test('deployment without the database feature flag reads existing tags safely and cannot claim a status save',async()=>{
+  const f=fixture({tag:{activo:true},env:{TRACKMYPET_LOST_STATUS_ENABLED:'false'}});
+  const read=await f.request({},null,'GET');assert.equal(read.code,200);assert.equal(read.body.data.perdida,false);
+  const selected=f.state.calls[0].u.searchParams.get('select').split(',');
+  assert.ok(!selected.includes('perdida'));assert.ok(!selected.includes('zona_perdida'));assert.ok(!selected.includes('mensaje_perdida'));
+  const token=(await f.verify()).body.token;
+  assert.equal((await f.request({code:base.codigo,action:'save',data:f.data()},token)).code,503);
 });
 test('leading-zero PIN survives verification and is absent from token and response',async()=>{
   const f=fixture();const r=await f.verify();assert.equal(r.code,200);
@@ -127,3 +148,4 @@ test('frontend compiles and contains no direct Supabase access or PIN comparison
   assert.match(html,/image\.alt = 'Foto de ' \+ petName/);
   assert.match(html,/escapeAttribute\(url\)/);
 });
+

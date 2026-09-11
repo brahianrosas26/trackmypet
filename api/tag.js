@@ -1,6 +1,8 @@
 const { createHmac, timingSafeEqual, randomUUID } = require('node:crypto');
 
-const PUBLIC_FIELDS = 'codigo,activo,nombre,sexo,telefono,zona,info,foto1,foto2,foto3,updated_at';
+const BASE_FIELDS = 'codigo,activo,nombre,sexo,telefono,zona,info,foto1,foto2,foto3,updated_at';
+const LOST_FIELDS = 'perdida,zona_perdida,mensaje_perdida';
+const PUBLIC_FIELDS = BASE_FIELDS + ',' + LOST_FIELDS;
 const BUCKET = 'pet-photos';
 const MAX_IMAGE = 512 * 1024;
 const MAX_BODY = 750 * 1024;
@@ -13,6 +15,7 @@ class ApiError extends Error {
 }
 
 function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Date.now } = {}) {
+  function lostStatusEnabled() { return env.TRACKMYPET_LOST_STATUS_ENABLED === 'true'; }
   function config() {
     const url = env.SUPABASE_URL?.replace(/\/$/, '');
     const key = env.SUPABASE_SERVICE_ROLE_KEY;
@@ -42,14 +45,16 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     return text ? JSON.parse(text) : null;
   }
   async function getTag(code, privateFields = false) {
+    const selected = BASE_FIELDS + (lostStatusEnabled() ? ',' + LOST_FIELDS : '');
     const rows = await db('/rest/v1/tags?codigo=eq.' + encodeURIComponent(code) + '&select=' +
-      (privateFields ? PUBLIC_FIELDS + ',id,pin' : PUBLIC_FIELDS) + '&limit=1');
+      (privateFields ? selected + ',id,pin' : selected) + '&limit=1');
     return rows?.[0] || null;
   }
   function publicTag(tag) {
     if (!tag) return null;
     if (!tag.activo) return { codigo: tag.codigo, activo: false };
-    return Object.fromEntries(PUBLIC_FIELDS.split(',').map(key => [key, tag[key] ?? null]));
+    return Object.fromEntries(PUBLIC_FIELDS.split(',').map(key =>
+      [key, key === 'perdida' ? tag[key] === true : (tag[key] ?? null)]));
   }
   function fingerprint(tag) { return mac('pin:' + tag.id + ':' + tag.pin); }
   function issueSession(tag, purpose) {
@@ -103,6 +108,14 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       values[key] = input[key].trim();
     }
     if (!['macho','hembra',''].includes(input.sexo)) throw new ApiError(400, 'Sexo inválido.');
+    if (typeof input.perdida !== 'boolean') throw new ApiError(400, 'Estado de la mascota inválido.');
+    if (!lostStatusEnabled()) throw new ApiError(503, 'El estado de mascota perdida todavía no está habilitado.');
+    for (const [key, limit] of [['zona_perdida',250],['mensaje_perdida',1000]]) {
+      if (typeof input[key] !== 'string' || input[key].trim().length > limit) {
+        throw new ApiError(400, 'Revisá los datos de mascota perdida.');
+      }
+      values[key] = input[key].trim();
+    }
     if (!Array.isArray(input.photos) || input.photos.length > 3) throw new ApiError(400, 'Fotos inválidas.');
     const old = [tag.foto1, tag.foto2, tag.foto3].filter(Boolean);
     for (const photo of input.photos) {
@@ -113,7 +126,7 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       }
     }
     if (input.updated_at !== (tag.updated_at ?? null)) throw new ApiError(409, 'Los datos cambiaron. Volvé a abrir la edición antes de guardar.');
-    return { ...values, sexo: input.sexo, activo: true,
+    return { ...values, sexo: input.sexo, perdida: input.perdida, activo: true,
       foto1: input.photos[0] || null, foto2: input.photos[1] || null, foto3: input.photos[2] || null,
       updated_at: new Date(now()).toISOString() };
   }
@@ -207,3 +220,4 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
 
 module.exports = createHandler();
 module.exports.createHandler = createHandler;
+
