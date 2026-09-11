@@ -337,6 +337,22 @@
       margin-bottom: 12px;
     }
 
+    [hidden] { display: none !important; }
+
+    .lost-details {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0 4px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #fff4d6;
+      border: 1px solid #f3cf70;
+      color: #624500;
+      font-size: 15px;
+    }
+
+    .lost-details strong { color: #3e2b00; }
+
     h1 { font-size: 38px; line-height: 1; letter-spacing: -0.06em; margin-bottom: 8px; }
     h2 { font-size: 30px; line-height: 1; letter-spacing: -0.05em; margin-bottom: 10px; }
 
@@ -780,9 +796,14 @@
         </div>
 
         <div class="body">
-          <span class="status">Estoy perdido/a</span>
+          <span class="status" id="profileStatus" hidden>Estoy perdido/a</span>
           <h1 id="profileName">Mascota</h1>
-          <p class="subtitle">Si me encontraste, por favor contactá a mi familia.</p>
+          <p class="subtitle" id="profileSubtitle">Ficha de identificación de la mascota.</p>
+
+          <div class="lost-details" id="lostDetails" hidden>
+            <div><strong>Zona donde se perdió:</strong> <span id="profileLostZone"></span></div>
+            <div id="lostMessageRow"><strong>Mensaje:</strong> <span id="profileLostMessage"></span></div>
+          </div>
 
           <div class="actions">
             <a id="whatsappBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener">WhatsApp</a>
@@ -839,6 +860,18 @@ Identificación QR para mascotas.</p>
             <div class="field"><label for="editOwnerPhone">Teléfono / WhatsApp</label><input id="editOwnerPhone" type="tel" required /></div>
             <div class="field"><label for="editPetZone">Zona o barrio</label><input id="editPetZone" type="text" /></div>
             <div class="field"><label for="editPetInfo">Información importante</label><textarea id="editPetInfo"></textarea></div>
+            <div class="field">
+              <label for="editLostStatus">Estado de la mascota</label>
+              <select id="editLostStatus">
+                <option value="false">No está perdida</option>
+                <option value="true">Está perdida</option>
+              </select>
+              <p class="note">Si vuelve a casa, elegí “No está perdida” y guardá los cambios.</p>
+            </div>
+            <div id="lostFields" hidden>
+              <div class="field"><label for="editLostZone">Zona donde se perdió</label><input id="editLostZone" type="text" placeholder="Ej: Parque Rodó, Montevideo" /></div>
+              <div class="field"><label for="editLostMessage">Mensaje de pérdida</label><textarea id="editLostMessage" placeholder="Ej: Se perdió el martes. Es tímida, acercate despacio."></textarea></div>
+            </div>
 <div class="field">
   <label>Foto actual de tu mascota</label>
   <div class="photo-editor-grid" id="editPhotoBoxes"></div>
@@ -962,6 +995,12 @@ let activationPinVerified = false;
       nextPhoto: document.getElementById("nextPhoto"),
       carouselDots: document.getElementById("carouselDots"),
       profileName: document.getElementById("profileName"),
+      profileStatus: document.getElementById("profileStatus"),
+      profileSubtitle: document.getElementById("profileSubtitle"),
+      lostDetails: document.getElementById("lostDetails"),
+      profileLostZone: document.getElementById("profileLostZone"),
+      lostMessageRow: document.getElementById("lostMessageRow"),
+      profileLostMessage: document.getElementById("profileLostMessage"),
       profileSex: document.getElementById("profileSex"),
       profileZone: document.getElementById("profileZone"),
       profileInfo: document.getElementById("profileInfo"),
@@ -977,6 +1016,10 @@ let activationPinVerified = false;
       editOwnerPhone: document.getElementById("editOwnerPhone"),
       editPetZone: document.getElementById("editPetZone"),
       editPetInfo: document.getElementById("editPetInfo"),
+      editLostStatus: document.getElementById("editLostStatus"),
+      lostFields: document.getElementById("lostFields"),
+      editLostZone: document.getElementById("editLostZone"),
+      editLostMessage: document.getElementById("editLostMessage"),
       editPetPhotos: document.getElementById("editPetPhotos"),
       editPhotoBoxes: document.getElementById("editPhotoBoxes"),
       editSuccess: document.getElementById("editSuccess"),
@@ -1040,7 +1083,8 @@ function showLandingOrTag() {
     async function savePetData(data) {
       const result = await api('save', { data: {
         nombre: data.name, sexo: data.sexo, telefono: data.phone, zona: data.zone,
-        info: data.info, photos: data.photos, updated_at: ownerVersion
+        info: data.info, perdida: Boolean(data.perdida), zona_perdida: data.lostZone || '',
+        mensaje_perdida: data.lostMessage || '', photos: data.photos, updated_at: ownerVersion
       }});
       ownerVersion = result.data.updated_at;
       return result.data;
@@ -1068,10 +1112,15 @@ function showLandingOrTag() {
         return;
       }
 
-      const statusText = data.sexo === "hembra" ? "Estoy perdida" : "Estoy perdido";
-      document.querySelectorAll(".status").forEach(function(item) {
-        item.textContent = statusText;
-      });
+      const isLost = data.perdida === true;
+      els.profileStatus.hidden = !isLost;
+      els.profileStatus.textContent = data.sexo === "hembra" ? "Estoy perdida" : "Estoy perdido";
+      els.profileSubtitle.textContent = isLost
+        ? "Si me encontraste, por favor contactá a mi familia."
+        : "Esta es mi ficha de identificación.";
+      els.lostDetails.hidden = !isLost;
+      els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
+      els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
 
       els.profileSex.textContent =
         data.sexo === "hembra" ? "Hembra" :
@@ -1283,6 +1332,10 @@ els.editPetPhotos.addEventListener("change", function() {
       els.editOwnerPhone.value = data.telefono || "";
       els.editPetZone.value = data.zona || "";
       els.editPetInfo.value = data.info || "";
+      els.editLostStatus.value = data.perdida === true ? "true" : "false";
+      els.editLostZone.value = data.zona_perdida || "";
+      els.editLostMessage.value = data.mensaje_perdida || "";
+      els.lostFields.hidden = data.perdida !== true;
       editPhotoUrls = [data.foto1 || null, data.foto2 || null, data.foto3 || null];
 editPhotoFiles = [null, null, null];
 editDeletedUrls = [];
@@ -1315,7 +1368,8 @@ renderEditPhotoBoxes();
       try {
         const photos = await uploadPhotos(activationPhotoFiles.filter(Boolean));
         await savePetData({ name: els.petName.value.trim(), sexo: els.petSex.value,
-          phone: els.ownerPhone.value.trim(), zone: els.petZone.value.trim(), info: els.petInfo.value.trim(), photos });
+          phone: els.ownerPhone.value.trim(), zone: els.petZone.value.trim(), info: els.petInfo.value.trim(),
+          perdida: false, lostZone: '', lostMessage: '', photos });
         activationPinVerified = false;
         ownerSession = null;
         els.activationSuccess.style.display = 'block';
@@ -1372,11 +1426,16 @@ renderEditPhotoBoxes();
         }
         await savePetData({ name: els.editPetName.value.trim(), sexo: els.editPetSex.value,
           phone: els.editOwnerPhone.value.trim(), zone: els.editPetZone.value.trim(),
-          info: els.editPetInfo.value.trim(), photos: finalPhotos });
+          info: els.editPetInfo.value.trim(), perdida: els.editLostStatus.value === "true",
+          lostZone: els.editLostZone.value.trim(), lostMessage: els.editLostMessage.value.trim(), photos: finalPhotos });
         els.editSuccess.style.display = 'block';
         setTimeout(renderProfile, 700);
       } catch (error) { alert(error.message); }
       finally { els.editForm.classList.remove('loading'); }
+    });
+
+    els.editLostStatus.addEventListener('change', function() {
+      els.lostFields.hidden = els.editLostStatus.value !== 'true';
     });
 
     els.prevPhoto.addEventListener("click", function(event) {
