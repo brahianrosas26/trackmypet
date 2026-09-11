@@ -10,7 +10,7 @@ const base = { id:'test-id', codigo:'9999999999', pin:'001234', activo:false,
 function fixture(options = {}) {
   const state = { tag:{...base,...options.tag}, calls:[], allowed:true, failSave:false, conflict:false, now:Date.parse('2026-09-10T01:00:00Z') };
   const env = { SUPABASE_URL:'https://test.supabase.co', SUPABASE_SERVICE_ROLE_KEY:'test-only-not-a-real-key',
-    TRACKMYPET_LOST_STATUS_ENABLED:'true', ...options.env };
+    TRACKMYPET_LOST_STATUS_ENABLED:'true', TRACKMYPET_PROFILE_FIELDS_ENABLED:'true', ...options.env };
   const handler = createHandler({env,now:()=>state.now,fetcher:async (url, init) => {
     const u = new URL(url);
     const payload = init.body && !(init.body instanceof Buffer) ? JSON.parse(init.body) : init.body;
@@ -35,6 +35,8 @@ function fixture(options = {}) {
   }
   const verify = (purpose = state.tag.activo ? 'edit':'activate') => request({code:base.codigo,action:'verify',pin:base.pin,purpose});
   const data = () => ({nombre:'Luna nueva',sexo:'hembra',telefono:'099123456',zona:'Prado',info:'',
+    especie:'Perro',raza:'Golden Retriever',fecha_nacimiento:'2021-06-01',
+    info_medica:'Es alérgica a ciertos alimentos (pollo y lácteos).',
     perdida:false,zona_perdida:'',mensaje_perdida:'',photos:[],updated_at:state.tag.updated_at});
   return {state,request,verify,data};
 }
@@ -49,6 +51,16 @@ test('active public response whitelists fields even if upstream leaks extra colu
   assert.equal(r.body.data.nombre,'Luna');assert.equal(r.body.data.pin,undefined);assert.equal(r.body.data.id,undefined);
   assert.equal(r.body.data.internal_secret,undefined);
   assert.equal(r.body.data.perdida,false);
+  assert.equal(r.body.data.info_medica,undefined);
+});
+test('new profile fields are returned only after PIN validation and save without changing identity',async()=>{
+  const f=fixture({tag:{activo:true,especie:'Perro',raza:'Mestiza',fecha_nacimiento:'2020-02-03',info_medica:'Alergia'}});
+  const publicRead=await f.request({},null,'GET');assert.equal(publicRead.body.data.especie,undefined);
+  const verified=await f.verify();assert.equal(verified.body.data.especie,'Perro');assert.equal(verified.body.data.info_medica,'Alergia');
+  const saved=await f.request({code:base.codigo,action:'save',data:f.data()},verified.body.token);
+  assert.equal(saved.code,200);assert.equal(f.state.tag.raza,'Golden Retriever');
+  assert.equal(f.state.tag.info_medica,'Es alérgica a ciertos alimentos (pollo y lácteos).');
+  assert.equal(f.state.tag.pin,base.pin);assert.equal(f.state.tag.codigo,base.codigo);assert.equal(f.state.tag.id,base.id);
 });
 test('owner can mark a pet lost and found without changing PIN, code or id',async()=>{
   const f=fixture({tag:{activo:true}});const token=(await f.verify()).body.token;
@@ -67,6 +79,14 @@ test('deployment without the database feature flag reads existing tags safely an
   assert.ok(!selected.includes('perdida'));assert.ok(!selected.includes('zona_perdida'));assert.ok(!selected.includes('mensaje_perdida'));
   const token=(await f.verify()).body.token;
   assert.equal((await f.request({code:base.codigo,action:'save',data:f.data()},token)).code,503);
+});
+test('profile columns are not queried before their rollout flag is enabled',async()=>{
+  const f=fixture({tag:{activo:true},env:{TRACKMYPET_PROFILE_FIELDS_ENABLED:'false'}});
+  const verified=await f.verify();assert.equal(verified.code,200);
+  const selected=f.state.calls.find(c=>c.u.pathname==='/rest/v1/tags' && c.u.searchParams.get('select').includes('pin'))
+    .u.searchParams.get('select').split(',');
+  for (const key of ['especie','raza','fecha_nacimiento','info_medica']) assert.ok(!selected.includes(key));
+  assert.equal((await f.request({code:base.codigo,action:'save',data:f.data()},verified.body.token)).code,503);
 });
 test('leading-zero PIN survives verification and is absent from token and response',async()=>{
   const f=fixture();const r=await f.verify();assert.equal(r.code,200);
@@ -147,5 +167,7 @@ test('frontend compiles and contains no direct Supabase access or PIN comparison
   assert.doesNotMatch(html,/SUPABASE_KEY|createClient|tag\.pin|\.from\("tags"\)|deleteOldPhotos/);
   assert.match(html,/image\.alt = 'Foto de ' \+ petName/);
   assert.match(html,/escapeAttribute\(url\)/);
+  assert.ok(html.indexOf('class="lost-control"') < html.indexOf('class="profile-form-grid"'));
+  assert.match(html,/<input id="editLostStatus" type="checkbox" \/>/);
 });
 

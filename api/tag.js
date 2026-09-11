@@ -3,6 +3,7 @@ const { createHmac, timingSafeEqual, randomUUID } = require('node:crypto');
 const BASE_FIELDS = 'codigo,activo,nombre,sexo,telefono,zona,info,foto1,foto2,foto3,updated_at';
 const LOST_FIELDS = 'perdida,zona_perdida,mensaje_perdida';
 const PUBLIC_FIELDS = BASE_FIELDS + ',' + LOST_FIELDS;
+const OWNER_PROFILE_FIELDS = 'especie,raza,fecha_nacimiento,info_medica';
 const BUCKET = 'pet-photos';
 const MAX_IMAGE = 512 * 1024;
 const MAX_BODY = 750 * 1024;
@@ -16,6 +17,7 @@ class ApiError extends Error {
 
 function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Date.now } = {}) {
   function lostStatusEnabled() { return env.TRACKMYPET_LOST_STATUS_ENABLED === 'true'; }
+  function ownerProfileEnabled() { return env.TRACKMYPET_PROFILE_FIELDS_ENABLED === 'true'; }
   function config() {
     const url = env.SUPABASE_URL?.replace(/\/$/, '');
     const key = env.SUPABASE_SERVICE_ROLE_KEY;
@@ -45,7 +47,8 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     return text ? JSON.parse(text) : null;
   }
   async function getTag(code, privateFields = false) {
-    const selected = BASE_FIELDS + (lostStatusEnabled() ? ',' + LOST_FIELDS : '');
+    const selected = BASE_FIELDS + (lostStatusEnabled() ? ',' + LOST_FIELDS : '') +
+      (privateFields && ownerProfileEnabled() ? ',' + OWNER_PROFILE_FIELDS : '');
     const rows = await db('/rest/v1/tags?codigo=eq.' + encodeURIComponent(code) + '&select=' +
       (privateFields ? selected + ',id,pin' : selected) + '&limit=1');
     return rows?.[0] || null;
@@ -55,6 +58,12 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     if (!tag.activo) return { codigo: tag.codigo, activo: false };
     return Object.fromEntries(PUBLIC_FIELDS.split(',').map(key =>
       [key, key === 'perdida' ? tag[key] === true : (tag[key] ?? null)]));
+  }
+  function ownerTag(tag) {
+    const data = publicTag(tag);
+    if (!data || !tag.activo || !ownerProfileEnabled()) return data;
+    for (const key of OWNER_PROFILE_FIELDS.split(',')) data[key] = tag[key] ?? null;
+    return data;
   }
   function fingerprint(tag) { return mac('pin:' + tag.id + ':' + tag.pin); }
   function issueSession(tag, purpose) {
@@ -110,6 +119,18 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     if (!['macho','hembra',''].includes(input.sexo)) throw new ApiError(400, 'Sexo inválido.');
     if (typeof input.perdida !== 'boolean') throw new ApiError(400, 'Estado de la mascota inválido.');
     if (!lostStatusEnabled()) throw new ApiError(503, 'El estado de mascota perdida todavía no está habilitado.');
+    if (!ownerProfileEnabled()) throw new ApiError(503, 'Los nuevos campos del perfil todavía no están habilitados.');
+    for (const [key, limit] of [['especie',80],['raza',120],['info_medica',2000]]) {
+      if (typeof input[key] !== 'string' || input[key].trim().length > limit) {
+        throw new ApiError(400, 'Revisá los datos del perfil.');
+      }
+      values[key] = input[key].trim();
+    }
+    if (typeof input.fecha_nacimiento !== 'string' ||
+        (input.fecha_nacimiento && !/^\d{4}-\d{2}-\d{2}$/.test(input.fecha_nacimiento))) {
+      throw new ApiError(400, 'Fecha de nacimiento inválida.');
+    }
+    values.fecha_nacimiento = input.fecha_nacimiento || null;
     for (const [key, limit] of [['zona_perdida',250],['mensaje_perdida',1000]]) {
       if (typeof input[key] !== 'string' || input[key].trim().length > limit) {
         throw new ApiError(400, 'Revisá los datos de mascota perdida.');
@@ -186,7 +207,7 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
         if (!tag || !equal(mac('compare:' + body.pin.trim()), mac('compare:' + tag.pin))) throw new ApiError(401, 'PIN incorrecto o TAG inexistente.');
         if ((body.purpose === 'activate') === Boolean(tag.activo)) throw new ApiError(409, 'El estado del TAG cambió. Volvé a abrir la ficha.');
         return send(200, { token: issueSession(tag, body.purpose), expires_in: SESSION_SECONDS,
-          data: { ...publicTag(tag), updated_at: tag.updated_at ?? null } });
+          data: { ...ownerTag(tag), updated_at: tag.updated_at ?? null } });
       }
       const { tag } = await authorized(req, code);
       if (action === 'upload') {
