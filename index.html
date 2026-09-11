@@ -964,6 +964,23 @@ Identificación QR para mascotas.</p>
               <input id="editPetPhotos" type="file" accept="image/*" style="display:none" />
             </div>
 
+            <div class="lost-control">
+              <div class="lost-control-head">
+                <div>
+                  <div class="lost-control-title">🐾 Estado de pérdida</div>
+                  <p class="note" id="lostStatusHelp">La ficha está en estado normal.</p>
+                </div>
+                <label class="switch" for="editLostStatus" aria-label="Estado de pérdida">
+                  <input id="editLostStatus" type="checkbox" />
+                  <span aria-hidden="true"></span>
+                </label>
+              </div>
+            </div>
+            <div class="lost-editor-fields" id="lostFields" hidden>
+              <div class="field"><label for="editLostZone">Zona donde se perdió</label><input id="editLostZone" type="text" placeholder="Ej: Parque Rodó, Montevideo" /></div>
+              <div class="field"><label for="editLostMessage">Mensaje de pérdida</label><textarea id="editLostMessage" placeholder="Ej: Se perdió el martes. Es tímida, acercate despacio."></textarea></div>
+            </div>
+
             <div class="profile-form-grid">
               <div class="field field-full"><label for="editPetName">Nombre</label><input id="editPetName" type="text" required /></div>
               <div class="field"><label for="editPetSpecies">Especie</label><input id="editPetSpecies" type="text" placeholder="Ej: Perro" /></div>
@@ -984,22 +1001,6 @@ Identificación QR para mascotas.</p>
               </div>
             </div>
 
-            <div class="lost-control">
-              <div class="lost-control-head">
-                <div>
-                  <div class="lost-control-title">🐾 Estado de pérdida</div>
-                  <p class="note" id="lostStatusHelp">La ficha está en estado normal.</p>
-                </div>
-                <label class="switch" for="editLostStatus" aria-label="Estado de pérdida">
-                  <input id="editLostStatus" type="checkbox" />
-                  <span aria-hidden="true"></span>
-                </label>
-              </div>
-            </div>
-            <div class="lost-editor-fields" id="lostFields" hidden>
-              <div class="field"><label for="editLostZone">Zona donde se perdió</label><input id="editLostZone" type="text" placeholder="Ej: Parque Rodó, Montevideo" /></div>
-              <div class="field"><label for="editLostMessage">Mensaje de pérdida</label><textarea id="editLostMessage" placeholder="Ej: Se perdió el martes. Es tímida, acercate despacio."></textarea></div>
-            </div>
             <input id="editOwnerPhone" type="hidden" />
             <input id="editPetZone" type="hidden" />
             <button class="btn btn-primary" type="submit">Guardar cambios</button>

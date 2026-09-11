@@ -167,5 +167,7 @@ test('frontend compiles and contains no direct Supabase access or PIN comparison
   assert.doesNotMatch(html,/SUPABASE_KEY|createClient|tag\.pin|\.from\("tags"\)|deleteOldPhotos/);
   assert.match(html,/image\.alt = 'Foto de ' \+ petName/);
   assert.match(html,/escapeAttribute\(url\)/);
+  assert.ok(html.indexOf('class="lost-control"') < html.indexOf('class="profile-form-grid"'));
+  assert.match(html,/<input id="editLostStatus" type="checkbox" \/>/);
 });
 
