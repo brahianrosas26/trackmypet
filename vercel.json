@@ -4,5 +4,10 @@
     { "src": "/api/.*", "status": 404 },
     { "src": "/.*", "dest": "/index.html" }
   ],
-  "functions": { "api/tag.js": { "maxDuration": 30 } }
+  "functions": {
+    "api/tag.js": { "maxDuration": 30 },
+    "api/account.js": { "maxDuration": 30 },
+    "api/auth-config.js": { "maxDuration": 15 }
+  }
 }
+

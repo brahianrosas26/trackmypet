@@ -8,7 +8,7 @@ const base = { id:'test-id', codigo:'9999999999', pin:'001234', activo:false,
   nombre:'Luna', sexo:'hembra', telefono:'099123456', zona:'Prado', info:'',
   perdida:false, zona_perdida:'', mensaje_perdida:'', foto1:null, foto2:null, foto3:null, updated_at:'2026-09-10T00:00:00.000Z' };
 function fixture(options = {}) {
-  const state = { tag:{...base,...options.tag}, calls:[], allowed:true, failSave:false, conflict:false, now:Date.parse('2026-09-10T01:00:00Z') };
+  const state = { tag:{...base,...options.tag}, calls:[], allowed:true, linked:Boolean(options.linked), failSave:false, conflict:false, now:Date.parse('2026-09-10T01:00:00Z') };
   const env = { SUPABASE_URL:'https://test.supabase.co', SUPABASE_SERVICE_ROLE_KEY:'test-only-not-a-real-key',
     TRACKMYPET_LOST_STATUS_ENABLED:'true', TRACKMYPET_PROFILE_FIELDS_ENABLED:'true', ...options.env };
   const handler = createHandler({env,now:()=>state.now,fetcher:async (url, init) => {
@@ -23,6 +23,8 @@ function fixture(options = {}) {
       if (!state.conflict) Object.assign(state.tag,payload);
     } else if (u.pathname === '/rest/v1/tags') {
       result = u.searchParams.get('codigo') === 'eq.' + state.tag.codigo ? [{...state.tag}] : [];
+    } else if (u.pathname === '/rest/v1/tag_owners') {
+      result = state.linked ? [{tag_id:state.tag.id}] : [];
     } else if (u.pathname.startsWith('/storage/v1/object/pet-photos/')) result = {Key:'test'};
     else throw Error('Unexpected request: ' + url);
     return new Response(JSON.stringify(result),{status:200});
@@ -38,7 +40,7 @@ function fixture(options = {}) {
     especie:'Perro',raza:'Golden Retriever',fecha_nacimiento:'2021-06-01',
     info_medica:'Es alérgica a ciertos alimentos (pollo y lácteos).',
     perdida:false,zona_perdida:'',mensaje_perdida:'',photos:[],updated_at:state.tag.updated_at});
-  return {state,request,verify,data};
+  return {state,env,request,verify,data};
 }
 test('public inactive response has no PIN, private id, draft contact or photo',async()=>{
   const f=fixture(); const r=await f.request({},null,'GET');
@@ -114,6 +116,12 @@ test('forged, expired and cross-TAG sessions are rejected',async()=>{
 test('changing a PIN invalidates prior sessions',async()=>{
   const f=fixture();const token=(await f.verify()).body.token;f.state.tag.pin='changed';
   assert.equal((await f.request({code:base.codigo,action:'save',data:f.data()},token)).code,401);
+});
+test('linking a TAG disables PIN verification and invalidates an existing PIN session',async()=>{
+  const f=fixture({tag:{activo:true}});const token=(await f.verify()).body.token;
+  f.env.TRACKMYPET_ACCOUNTS_ENABLED='true';f.state.linked=true;
+  assert.equal((await f.verify()).code,409);
+  assert.equal((await f.request({code:base.codigo,action:'save',data:f.data()},token)).code,409);
 });
 test('activation saves all allowed fields but never overwrites PIN, code or id',async()=>{
   const f=fixture();const token=(await f.verify()).body.token;

@@ -18,6 +18,7 @@ class ApiError extends Error {
 function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Date.now } = {}) {
   function lostStatusEnabled() { return env.TRACKMYPET_LOST_STATUS_ENABLED === 'true'; }
   function ownerProfileEnabled() { return env.TRACKMYPET_PROFILE_FIELDS_ENABLED === 'true'; }
+  function accountsEnabled() { return env.TRACKMYPET_ACCOUNTS_ENABLED === 'true'; }
   function config() {
     const url = env.SUPABASE_URL?.replace(/\/$/, '');
     const key = env.SUPABASE_SERVICE_ROLE_KEY;
@@ -53,6 +54,11 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       (privateFields ? selected + ',id,pin' : selected) + '&limit=1');
     return rows?.[0] || null;
   }
+  async function tagIsLinked(tagId) {
+    if (!accountsEnabled()) return false;
+    const rows = await db('/rest/v1/tag_owners?tag_id=eq.' + encodeURIComponent(tagId) + '&select=tag_id&limit=1');
+    return Boolean(rows?.length);
+  }
   function publicTag(tag) {
     if (!tag) return null;
     if (!tag.activo) return { codigo: tag.codigo, activo: false };
@@ -87,6 +93,9 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     const tag = await getTag(code, true);
     if (!tag || session.id !== tag.id || !equal(session.fp, fingerprint(tag))) {
       throw new ApiError(401, 'Ingresá nuevamente el PIN para continuar.');
+    }
+    if (await tagIsLinked(tag.id)) {
+      throw new ApiError(409, 'Este TAG se administra desde la cuenta de su propietario.');
     }
     if ((session.purpose === 'activate') === Boolean(tag.activo)) {
       throw new ApiError(409, 'El estado del TAG cambió. Volvé a abrir la ficha.');
@@ -205,6 +214,7 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
         if (!allowance?.allowed) throw new ApiError(429, 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.', allowance?.retry_after || 900);
         const tag = await getTag(code, true);
         if (!tag || !equal(mac('compare:' + body.pin.trim()), mac('compare:' + tag.pin))) throw new ApiError(401, 'PIN incorrecto o TAG inexistente.');
+        if (await tagIsLinked(tag.id)) throw new ApiError(409, 'Este TAG se administra desde la cuenta de su propietario.');
         if ((body.purpose === 'activate') === Boolean(tag.activo)) throw new ApiError(409, 'El estado del TAG cambió. Volvé a abrir la ficha.');
         return send(200, { token: issueSession(tag, body.purpose), expires_in: SESSION_SECONDS,
           data: { ...ownerTag(tag), updated_at: tag.updated_at ?? null } });
