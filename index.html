@@ -445,6 +445,117 @@
       margin-bottom: 12px;
     }
 
+    .profile-editor-card .body { padding: 22px; }
+
+    .profile-editor-title {
+      font-size: 32px;
+      margin: 12px 0 6px;
+    }
+
+    .profile-editor-photo {
+      width: 112px;
+      height: 112px;
+      margin: 8px auto 20px;
+      position: relative;
+    }
+
+    .profile-editor-photo .photo-slot {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      border: 4px solid white;
+      box-shadow: 0 10px 28px rgba(17,24,22,.14);
+      overflow: hidden;
+      background: #e8f4ed;
+      color: var(--green-dark);
+      font-size: 36px;
+    }
+
+    .profile-editor-photo .photo-remove { display: none; }
+
+    .profile-editor-photo::after {
+      content: "📷";
+      position: absolute;
+      right: -2px;
+      bottom: 2px;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border: 3px solid white;
+      border-radius: 50%;
+      background: var(--green);
+      color: white;
+      font-size: 17px;
+      pointer-events: none;
+    }
+
+    .profile-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .profile-form-grid .field-full { grid-column: 1 / -1; }
+
+    .medical-block {
+      padding: 16px;
+      border-radius: 20px;
+      background: #edf7f0;
+      border: 1px solid #d4eadb;
+    }
+
+    .medical-block label { color: #173f2d; font-size: 15px; }
+
+    .lost-control {
+      padding: 16px;
+      border-radius: 20px;
+      background: #fff5f3;
+      border: 1px solid #f3d9d5;
+    }
+
+    .lost-control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .lost-control-title { font-weight: 850; color: var(--text); }
+
+    .switch { position: relative; width: 52px; height: 30px; flex: 0 0 auto; }
+    .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .switch span {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #cfd5d1;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .switch span::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 7px rgba(0,0,0,.18);
+      transition: .2s ease;
+    }
+    .switch input:checked + span { background: var(--green); }
+    .switch input:checked + span::after { transform: translateX(22px); }
+    .switch input:focus-visible + span { outline: 3px solid rgba(47,143,91,.25); }
+
+    .lost-editor-fields { display: grid; gap: 12px; margin-top: 12px; }
+
+    @media (max-width: 420px) {
+      .profile-form-grid { grid-template-columns: 1fr; }
+      .profile-form-grid .field-full { grid-column: auto; }
+    }
+
     .back-btn {
       border: 0;
       background: transparent;
@@ -839,47 +950,60 @@ Identificación QR para mascotas.</p>
     </section>
 
     <section id="editScreen" class="screen">
-      <div class="card">
+      <div class="card profile-editor-card">
         <div class="body">
           <div class="mini-header"><button class="back-btn" id="backToProfileFromEdit">← Cancelar</button></div>
-          <h2>Editar datos</h2>
-          <p class="subtitle">Actualizá la información que verá quien escanee el QR.</p>
+          <h2 class="profile-editor-title" id="editProfileTitle">Perfil de tu mascota</h2>
+          <p class="subtitle">Gestioná la información de tu mascota.</p>
 
           <div id="editSuccess" class="success">Datos actualizados correctamente.</div>
 
           <form class="form" id="editForm">
-            <div class="field"><label for="editPetName">Nombre de la mascota</label><input id="editPetName" type="text" required /></div>
-            <div class="field">
-              <label for="editPetSex">Sexo</label>
-              <select id="editPetSex">
-                <option value="">Seleccionar</option>
-                <option value="macho">Macho</option>
-                <option value="hembra">Hembra</option>
-              </select>
+            <div class="profile-editor-photo">
+              <div class="photo-editor-grid" id="editPhotoBoxes"></div>
+              <input id="editPetPhotos" type="file" accept="image/*" style="display:none" />
             </div>
-            <div class="field"><label for="editOwnerPhone">Teléfono / WhatsApp</label><input id="editOwnerPhone" type="tel" required /></div>
-            <div class="field"><label for="editPetZone">Zona o barrio</label><input id="editPetZone" type="text" /></div>
-            <div class="field"><label for="editPetInfo">Información importante</label><textarea id="editPetInfo"></textarea></div>
-            <div class="field">
-              <label for="editLostStatus">Estado de la mascota</label>
-              <select id="editLostStatus">
-                <option value="false">No está perdida</option>
-                <option value="true">Está perdida</option>
-              </select>
-              <p class="note">Si vuelve a casa, elegí “No está perdida” y guardá los cambios.</p>
+
+            <div class="profile-form-grid">
+              <div class="field field-full"><label for="editPetName">Nombre</label><input id="editPetName" type="text" required /></div>
+              <div class="field"><label for="editPetSpecies">Especie</label><input id="editPetSpecies" type="text" placeholder="Ej: Perro" /></div>
+              <div class="field"><label for="editPetBreed">Raza</label><input id="editPetBreed" type="text" placeholder="Ej: Golden Retriever" /></div>
+              <div class="field">
+                <label for="editPetSex">Sexo</label>
+                <select id="editPetSex">
+                  <option value="">Seleccionar</option>
+                  <option value="macho">Macho</option>
+                  <option value="hembra">Hembra</option>
+                </select>
+              </div>
+              <div class="field"><label for="editPetBirthDate">Fecha de nacimiento</label><input id="editPetBirthDate" type="date" /></div>
+              <div class="field field-full"><label for="editPetInfo">Información</label><textarea id="editPetInfo"></textarea></div>
+              <div class="field field-full medical-block">
+                <label for="editPetMedical">♥ Información médica</label>
+                <textarea id="editPetMedical" placeholder="Ej: Es alérgica a ciertos alimentos (pollo y lácteos)."></textarea>
+              </div>
             </div>
-            <div id="lostFields" hidden>
+
+            <div class="lost-control">
+              <div class="lost-control-head">
+                <div>
+                  <div class="lost-control-title">🐾 Estado de pérdida</div>
+                  <p class="note" id="lostStatusHelp">La ficha está en estado normal.</p>
+                </div>
+                <label class="switch" for="editLostStatus" aria-label="Estado de pérdida">
+                  <input id="editLostStatus" type="checkbox" />
+                  <span aria-hidden="true"></span>
+                </label>
+              </div>
+            </div>
+            <div class="lost-editor-fields" id="lostFields" hidden>
               <div class="field"><label for="editLostZone">Zona donde se perdió</label><input id="editLostZone" type="text" placeholder="Ej: Parque Rodó, Montevideo" /></div>
               <div class="field"><label for="editLostMessage">Mensaje de pérdida</label><textarea id="editLostMessage" placeholder="Ej: Se perdió el martes. Es tímida, acercate despacio."></textarea></div>
             </div>
-<div class="field">
-  <label>Foto actual de tu mascota</label>
-  <div class="photo-editor-grid" id="editPhotoBoxes"></div>
-  <input id="editPetPhotos" type="file" accept="image/*" style="display:none" />
-</div>            <button class="btn btn-primary" type="submit">Guardar cambios</button>
+            <input id="editOwnerPhone" type="hidden" />
+            <input id="editPetZone" type="hidden" />
+            <button class="btn btn-primary" type="submit">Guardar cambios</button>
           </form>
-
-          <p class="note">Si no elegís una foto nueva, se mantiene la actual.</p>
         </div>
       </div>
     </section>
@@ -1011,12 +1135,18 @@ let activationPinVerified = false;
       editPin: document.getElementById("editPin"),
       pinError: document.getElementById("pinError"),
       editForm: document.getElementById("editForm"),
+      editProfileTitle: document.getElementById("editProfileTitle"),
       editPetName: document.getElementById("editPetName"),
+      editPetSpecies: document.getElementById("editPetSpecies"),
+      editPetBreed: document.getElementById("editPetBreed"),
       editPetSex: document.getElementById("editPetSex"),
+      editPetBirthDate: document.getElementById("editPetBirthDate"),
       editOwnerPhone: document.getElementById("editOwnerPhone"),
       editPetZone: document.getElementById("editPetZone"),
       editPetInfo: document.getElementById("editPetInfo"),
+      editPetMedical: document.getElementById("editPetMedical"),
       editLostStatus: document.getElementById("editLostStatus"),
+      lostStatusHelp: document.getElementById("lostStatusHelp"),
       lostFields: document.getElementById("lostFields"),
       editLostZone: document.getElementById("editLostZone"),
       editLostMessage: document.getElementById("editLostMessage"),
@@ -1083,7 +1213,9 @@ function showLandingOrTag() {
     async function savePetData(data) {
       const result = await api('save', { data: {
         nombre: data.name, sexo: data.sexo, telefono: data.phone, zona: data.zone,
-        info: data.info, perdida: Boolean(data.perdida), zona_perdida: data.lostZone || '',
+        info: data.info, especie: data.species || '', raza: data.breed || '',
+        fecha_nacimiento: data.birthDate || '', info_medica: data.medical || '',
+        perdida: Boolean(data.perdida), zona_perdida: data.lostZone || '',
         mensaje_perdida: data.lostMessage || '', photos: data.photos, updated_at: ownerVersion
       }});
       ownerVersion = result.data.updated_at;
@@ -1265,43 +1397,13 @@ els.petPhotos.addEventListener("change", function() {
 });
     
 function renderEditPhotoBoxes() {
-  els.editPhotoBoxes.innerHTML = editPhotoUrls.map(function(url, index) {
-
-    if(index > 0) return "";
-    
-    if (url) {
-      return `
-        <div class="photo-slot" data-index="${index}">
-          <img src="${escapeAttribute(url)}" alt="Foto ${index + 1}">
-          <button class="photo-remove" type="button" data-remove="${index}">×</button>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="photo-slot" data-index="${index}">
-        +
-      </div>
-    `;
-  }).join("");
+  const url = editPhotoUrls[0];
+  els.editPhotoBoxes.innerHTML = url
+    ? `<div class="photo-slot" data-index="0"><img src="${escapeAttribute(url)}" alt="Foto principal de la mascota"></div>`
+    : `<div class="photo-slot" data-index="0">🐶</div>`;
 }
 
 els.editPhotoBoxes.addEventListener("click", function(event) {
-  const removeBtn = event.target.closest("[data-remove]");
-
-  if (removeBtn) {
-    const index = Number(removeBtn.dataset.remove);
-
-    if (editPhotoUrls[index]) {
-      editDeletedUrls.push(editPhotoUrls[index]);
-    }
-
-    editPhotoUrls[index] = null;
-    editPhotoFiles[index] = null;
-    renderEditPhotoBoxes();
-    return;
-  }
-
   const slot = event.target.closest(".photo-slot");
   if (!slot) return;
 
@@ -1328,14 +1430,22 @@ els.editPetPhotos.addEventListener("change", function() {
       if (!data) return;
 
       els.editPetName.value = data.nombre || "";
+      els.editProfileTitle.textContent = "Perfil de " + (data.nombre || "tu mascota");
+      els.editPetSpecies.value = data.especie || "";
+      els.editPetBreed.value = data.raza || "";
       els.editPetSex.value = data.sexo || "";
+      els.editPetBirthDate.value = data.fecha_nacimiento || "";
       els.editOwnerPhone.value = data.telefono || "";
       els.editPetZone.value = data.zona || "";
       els.editPetInfo.value = data.info || "";
-      els.editLostStatus.value = data.perdida === true ? "true" : "false";
+      els.editPetMedical.value = data.info_medica || "";
+      els.editLostStatus.checked = data.perdida === true;
       els.editLostZone.value = data.zona_perdida || "";
       els.editLostMessage.value = data.mensaje_perdida || "";
       els.lostFields.hidden = data.perdida !== true;
+      els.lostStatusHelp.textContent = data.perdida === true
+        ? "Está perdida. La ficha pública muestra el aviso de pérdida."
+        : "La ficha está en estado normal.";
       editPhotoUrls = [data.foto1 || null, data.foto2 || null, data.foto3 || null];
 editPhotoFiles = [null, null, null];
 editDeletedUrls = [];
@@ -1425,8 +1535,10 @@ renderEditPhotoBoxes();
           }
         }
         await savePetData({ name: els.editPetName.value.trim(), sexo: els.editPetSex.value,
+          species: els.editPetSpecies.value.trim(), breed: els.editPetBreed.value.trim(),
+          birthDate: els.editPetBirthDate.value, medical: els.editPetMedical.value.trim(),
           phone: els.editOwnerPhone.value.trim(), zone: els.editPetZone.value.trim(),
-          info: els.editPetInfo.value.trim(), perdida: els.editLostStatus.value === "true",
+          info: els.editPetInfo.value.trim(), perdida: els.editLostStatus.checked,
           lostZone: els.editLostZone.value.trim(), lostMessage: els.editLostMessage.value.trim(), photos: finalPhotos });
         els.editSuccess.style.display = 'block';
         setTimeout(renderProfile, 700);
@@ -1435,7 +1547,10 @@ renderEditPhotoBoxes();
     });
 
     els.editLostStatus.addEventListener('change', function() {
-      els.lostFields.hidden = els.editLostStatus.value !== 'true';
+      els.lostFields.hidden = !els.editLostStatus.checked;
+      els.lostStatusHelp.textContent = els.editLostStatus.checked
+        ? "Está perdida. La ficha pública muestra el aviso de pérdida."
+        : "La ficha está en estado normal.";
     });
 
     els.prevPhoto.addEventListener("click", function(event) {
