@@ -1116,16 +1116,27 @@ Identificación QR para mascotas.</p>
   <script>
     let ownerSession = null;
     let accountSession = null;
+    let accountClient = null;
+    let usingAccount = false;
     let ownerVersion = null;
     let saveMode = null;
     const accountActivationRequested = new URLSearchParams(window.location.search).get('account-activate') === '1';
+    const accountEditRequested = new URLSearchParams(window.location.search).get('account-edit') === '1';
+    let accountEditOpened = false;
 
     async function api(action, payload = {}) {
+      let accountHeaders = {};
+      if (usingAccount && action !== 'get') {
+        const { data: { session } } = await accountClient.auth.getSession();
+        if (!session) throw new Error('Tu sesión venció. Volvé a Mis mascotas e iniciá sesión.');
+        accountHeaders = { 'X-Owner-Authorization': 'Bearer ' + session.access_token };
+      }
       const response = await fetch(action === 'get' ? '/api/tag?code=' + encodeURIComponent(tagCode) : '/api/tag', {
         method: action === 'get' ? 'GET' : 'POST',
         cache: 'no-store',
         headers: action === 'get' ? {} : {
           'Content-Type': 'application/json',
+          ...accountHeaders,
           ...((ownerSession || accountSession) ? { Authorization: 'Bearer ' + (ownerSession || accountSession) } : {})
         },
         body: action === 'get' ? undefined : JSON.stringify({ action, code: tagCode, ...payload })
@@ -1142,6 +1153,7 @@ Identificación QR para mascotas.</p>
     }
 
     async function verifyPin(pin, purpose) {
+      usingAccount = false;
       const result = await api('verify', { pin: pin.trim(), purpose });
       ownerSession = result.token;
       ownerVersion = result.data.updated_at ?? null;
@@ -1149,22 +1161,31 @@ Identificación QR para mascotas.</p>
       return result.data;
     }
 
-    async function activateFromAccount() {
+    async function activateFromAccount(purpose = 'activate') {
       const cfgResponse = await fetch('/api/auth-config', { cache: 'no-store' });
       const cfg = await cfgResponse.json();
       if (!cfgResponse.ok) throw new Error(cfg.error || 'No se pudo iniciar la activación.');
       const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');
       const client = createClient(cfg.supabaseUrl, cfg.supabasePublishableKey);
+      accountClient = client;
       const { data: { session } } = await client.auth.getSession();
       if (!session) { window.location.replace('/iniciar-sesion?tag=' + encodeURIComponent(tagCode)); return; }
       accountSession = session.access_token;
+      ownerSession = null;
+      usingAccount = true;
       try {
-        const result = await api('account-activate');
+        const result = await api(purpose === 'edit' ? 'account-edit' : 'account-activate');
         ownerSession = result.token;
         ownerVersion = result.data.updated_at ?? null;
-        saveMode = 'activate';
-        activationPinVerified = true;
-        showScreen('petSetup');
+        saveMode = purpose;
+        if (purpose === 'edit') {
+          await fillEditForm(result.data);
+          els.editSuccess.style.display = 'none';
+          showScreen('edit');
+        } else {
+          activationPinVerified = true;
+          showScreen('petSetup');
+        }
       } finally { accountSession = null; }
     }
 
@@ -1363,6 +1384,17 @@ function showLandingOrTag() {
         els.activationAccountOptions.hidden = false;
         els.activationForm.hidden = true;
         showScreen("activation");
+        return;
+      }
+
+      if (accountEditRequested && !accountEditOpened) {
+        accountEditOpened = true;
+        try { await activateFromAccount('edit'); }
+        catch (error) {
+          els.pinError.textContent = error.message;
+          els.pinError.style.display = 'block';
+          showScreen('pin');
+        }
         return;
       }
 
@@ -1761,4 +1793,5 @@ renderActivationPhotoBoxes();
   </script>
 </body>
 </html>
+
 
