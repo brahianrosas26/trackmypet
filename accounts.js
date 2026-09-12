@@ -69,7 +69,7 @@ async function loadPets(session){
   if(!user.email_confirmed_at){note('Confirmá tu email antes de vincular o administrar TAGs.',true);return show('petsView')}
   const response=await fetch('/api/account',{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store'}),json=await response.json();
   if(!response.ok){note(json.error||'No se pudieron cargar tus mascotas.',true);return show('petsView')}
-  els.petList.innerHTML=json.data.length?json.data.map(tag=>`<article class="pet"><h2>${escapeHtml(tag.nombre||'TAG '+tag.codigo)}</h2><p>Código ${escapeHtml(tag.codigo)} · ${tag.activo?'Activo':'Pendiente de activación'}</p></article>`).join(''):'<p>Aún no tenés TAGs vinculados.</p>';
+  els.petList.innerHTML=json.data.length?json.data.map(tag=>`<article class="pet"><h2>${escapeHtml(tag.nombre||'TAG '+tag.codigo)}</h2><p>Código ${escapeHtml(tag.codigo)} · ${tag.activo?'Activo':'Pendiente de activación'}</p><div class="links"><a href="/${encodeURIComponent(tag.codigo)}?${tag.activo?'account-edit':'account-activate'}=1">${tag.activo?'Editar perfil':'Continuar activación'}</a><a href="/${encodeURIComponent(tag.codigo)}">Ver ficha</a></div></article>`).join(''):'<p>Aún no tenés TAGs vinculados. Agregá tu primer TAG con su código y PIN.</p>';
   const tag=pendingTag();
   if(tag){claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá el PIN del TAG que acabás de escanear.';claimCode.value=tag;claimCodeWrap.classList.add('hidden')}
   else {claimTitle.textContent='Agregar TAG';claimIntro.textContent='Ingresá el código y PIN para vincularlo a tu cuenta.';claimCodeWrap.classList.remove('hidden')}
@@ -104,7 +104,7 @@ resetForm?.addEventListener('submit',async e=>{
   e.preventDefault();const {error}=await supabase.auth.updateUser({password:resetPassword.value});
   if(error)return note(error.message,true);note('Contraseña actualizada. Ya podés iniciar sesión.');setTimeout(()=>location.replace('/iniciar-sesion'),800);
 });
-logoutBtn?.addEventListener('click',async()=>{await supabase.auth.signOut();location.replace('/iniciar-sesion')});
+logoutBtn?.addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();if(error)return note('No se pudo cerrar la sesión. Intentá nuevamente.',true);sessionStorage.removeItem('trackmypetPendingTag');location.replace('/iniciar-sesion')});
 claimForm?.addEventListener('submit',async e=>{
   e.preventDefault();const {data:{session}}=await supabase.auth.getSession();
   if(!session)return location.replace(destination('/iniciar-sesion'));
@@ -115,3 +115,4 @@ claimForm?.addEventListener('submit',async e=>{
   note(json.data.alreadyLinked?'Este TAG ya estaba vinculado a tu cuenta.':'TAG vinculado correctamente.');await loadPets(session);
 });
 setup().catch(error=>note(error.message,true));
+
