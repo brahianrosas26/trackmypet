@@ -1,4 +1,5 @@
 const { createHmac, timingSafeEqual, randomUUID } = require('node:crypto');
+const { OwnerAuthError, verifiedOwner } = require('./_lib/owner-auth');
 
 const BASE_FIELDS = 'codigo,activo,nombre,sexo,telefono,zona,info,foto1,foto2,foto3,updated_at';
 const LOST_FIELDS = 'perdida,zona_perdida,mensaje_perdida';
@@ -54,11 +55,12 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       (privateFields ? selected + ',id,pin' : selected) + '&limit=1');
     return rows?.[0] || null;
   }
-  async function tagIsLinked(tagId) {
-    if (!accountsEnabled()) return false;
-    const rows = await db('/rest/v1/tag_owners?tag_id=eq.' + encodeURIComponent(tagId) + '&select=tag_id&limit=1');
-    return Boolean(rows?.length);
+  async function linkedOwner(tagId) {
+    if (!accountsEnabled()) return null;
+    const rows = await db('/rest/v1/tag_owners?tag_id=eq.' + encodeURIComponent(tagId) + '&select=user_id&limit=1');
+    return rows?.[0] || null;
   }
+  async function tagIsLinked(tagId) { return Boolean(await linkedOwner(tagId)); }
   function publicTag(tag) {
     if (!tag) return null;
     if (!tag.activo) return { codigo: tag.codigo, activo: false };
@@ -72,8 +74,8 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     return data;
   }
   function fingerprint(tag) { return mac('pin:' + tag.id + ':' + tag.pin); }
-  function issueSession(tag, purpose) {
-    const payload = Buffer.from(JSON.stringify({ code: tag.codigo, id: tag.id, purpose,
+  function issueSession(tag, purpose, ownerId = null) {
+    const payload = Buffer.from(JSON.stringify({ code: tag.codigo, id: tag.id, purpose, owner: ownerId,
       exp: Math.floor(now() / 1000) + SESSION_SECONDS, fp: fingerprint(tag) })).toString('base64url');
     return payload + '.' + mac('session:' + payload);
   }
@@ -94,7 +96,8 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     if (!tag || session.id !== tag.id || !equal(session.fp, fingerprint(tag))) {
       throw new ApiError(401, 'Ingresá nuevamente el PIN para continuar.');
     }
-    if (await tagIsLinked(tag.id)) {
+    const owner = await linkedOwner(tag.id);
+    if (owner && session.owner !== owner.user_id) {
       throw new ApiError(409, 'Este TAG se administra desde la cuenta de su propietario.');
     }
     if ((session.purpose === 'activate') === Boolean(tag.activo)) {
@@ -201,8 +204,18 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       const body = await readBody(req);
       const { code, action } = body;
       if (typeof code !== 'string' || !/^[0-9]{4,10}$/.test(code)) throw new ApiError(400, 'Código inválido.');
-      if (!['verify','save','upload'].includes(action)) throw new ApiError(400, 'Acción inválida.');
+      if (!['verify','account-activate','save','upload'].includes(action)) throw new ApiError(400, 'Acción inválida.');
       checkPreview(code);
+      if (action === 'account-activate') {
+        const user = await verifiedOwner(req, { env, fetcher });
+        const tag = await getTag(code, true);
+        if (!tag) throw new ApiError(404, 'Este TAG no existe o todavía no fue creado.');
+        const owner = await linkedOwner(tag.id);
+        if (!owner || owner.user_id !== user.id) throw new ApiError(403, 'Primero vinculá este TAG a tu cuenta con su PIN.');
+        if (tag.activo) throw new ApiError(409, 'Este TAG ya está activado.');
+        return send(200, { token: issueSession(tag, 'activate', user.id), expires_in: SESSION_SECONDS,
+          data: { ...ownerTag(tag), updated_at: tag.updated_at ?? null } });
+      }
       if (action === 'verify') {
         if (typeof body.pin !== 'string' || body.pin.length < 1 || body.pin.length > 128 || !['activate','edit'].includes(body.purpose)) {
           throw new ApiError(400, 'Revisá el PIN ingresado.');
@@ -244,7 +257,8 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     } catch (error) {
       if (error.retryAfter) res.setHeader('Retry-After', String(error.retryAfter));
       // Never log requests, PINs, tokens, upstream errors or secret configuration.
-      return send(error.status || 503, { error: error instanceof ApiError ? error.message : 'No se pudo conectar. Intentá nuevamente.' });
+      const known = error instanceof ApiError || error instanceof OwnerAuthError;
+      return send(error.status || 503, { error: known ? error.message : 'No se pudo conectar. Intentá nuevamente.' });
     }
   };
 }
