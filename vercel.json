@@ -1,7 +1,7 @@
 {
   "routes": [
     { "handle": "filesystem" },
-    { "src": "/(registro|iniciar-sesion|recuperar-clave|restablecer-clave|mis-mascotas)", "dest": "/accounts.html" },
+    { "src": "/(registro|verificar-email|iniciar-sesion|recuperar-clave|restablecer-clave|mis-mascotas)", "dest": "/accounts.html" },
     { "src": "/api/.*", "status": 404 },
     { "src": "/.*", "dest": "/index.html" }
   ],
@@ -11,4 +11,3 @@
     "api/auth-config.js": { "maxDuration": 15 }
   }
 }
-
