@@ -173,6 +173,15 @@ test('configuration errors fail closed and never disclose the key',async()=>{
   const f=fixture({env:{SUPABASE_SERVICE_ROLE_KEY:''}});const r=await f.request({},null,'GET');
   assert.equal(r.code,503);assert.equal(f.state.calls.length,0);
 });
+test('additional fictional TAGs are allowed only against the exact staging project',async()=>{
+  for (const url of ['https://test.supabase.co','https://ohoklhgivqjqtkqzrrhi.supabase.co']) {
+    const f=fixture({env:{VERCEL_ENV:'preview',SUPABASE_URL:url}});
+    assert.equal((await f.request({code:'000001',action:'verify',pin:'0123',purpose:'activate'})).code,403);
+  }
+  const f=fixture({env:{VERCEL_ENV:'preview',SUPABASE_URL:'https://mdssoloncjsexuulgqeq.supabase.co'}});
+  assert.equal((await f.request({code:'000001',action:'verify',pin:'0123',purpose:'activate'})).code,401);
+  assert.ok(f.state.calls.some(c=>c.u.pathname.endsWith('/rpc/tmp_pin_attempt')));
+});
 test('frontend compiles and contains no direct sensitive table access or PIN comparison',()=>{
   const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
   const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
@@ -209,5 +218,4 @@ test('account activation is resumable and account uploads require the matching o
   assert.equal((await f.request(body,opened.body.token,'POST','owner-b')).code,403);
   assert.equal((await f.request(body,opened.body.token,'POST','owner-a')).code,200);
 });
-
 
