@@ -62,6 +62,10 @@ async function setup(){
     if(!session){location.replace(destination('/iniciar-sesion'));return}
     return loadPets(session);
   }
+  if(path==='/iniciar-sesion'){
+    const {data:{session}}=await supabase.auth.getSession();
+    if(session){location.replace(destination('/mis-mascotas'));return}
+  }
   show('loginView');
 }
 async function loadPets(session){
