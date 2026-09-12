@@ -15,8 +15,8 @@ against the production project `ohoklhgivqjqtkqzrrhi`.
 
 1. Create a new Supabase project named `trackmypet-staging` in the same organization.
 2. Use a new database password. Do not reuse the production database password.
-3. In the staging SQL Editor, run migrations `001` through `006` in numeric order.
-4. Create one disposable TAG for testing. Use code `000000`; do not copy a real PIN, phone number, photo or owner record.
+3. In the staging SQL Editor, run `staging/000_tags_schema.sql`, `staging/001_pet_photos_bucket.sql`, then migrations `001` through `006` in numeric order.
+4. Run `staging/seed_test_tag.sql` to create the disposable TAG `000000` with PIN `0123`. Do not copy a real PIN, phone number, photo or owner record.
 5. Under Authentication > URL Configuration, set the Site URL to the exact Vercel Preview origin once it exists.
 6. Add only the exact Preview callback URLs needed for registration and password recovery. Do not use a production URL or an unrestricted wildcard.
 7. Keep email confirmation enabled.
