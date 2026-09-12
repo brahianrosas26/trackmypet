@@ -100,6 +100,13 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     if (owner && session.owner !== owner.user_id) {
       throw new ApiError(409, 'Este TAG se administra desde la cuenta de su propietario.');
     }
+    if (session.owner) {
+      const user = await verifiedOwner({ ...req, headers: { ...req.headers,
+        authorization: req.headers['x-owner-authorization'] } }, { env, fetcher });
+      if (!owner || user.id !== owner.user_id || user.id !== session.owner) {
+        throw new ApiError(403, 'No tenés permiso para administrar este TAG.');
+      }
+    }
     if ((session.purpose === 'activate') === Boolean(tag.activo)) {
       throw new ApiError(409, 'El estado del TAG cambió. Volvé a abrir la ficha.');
     }
@@ -204,16 +211,19 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       const body = await readBody(req);
       const { code, action } = body;
       if (typeof code !== 'string' || !/^[0-9]{4,10}$/.test(code)) throw new ApiError(400, 'Código inválido.');
-      if (!['verify','account-activate','save','upload'].includes(action)) throw new ApiError(400, 'Acción inválida.');
+      if (!['verify','account-activate','account-edit','save','upload'].includes(action)) throw new ApiError(400, 'Acción inválida.');
       checkPreview(code);
-      if (action === 'account-activate') {
+      if (action === 'account-activate' || action === 'account-edit') {
         const user = await verifiedOwner(req, { env, fetcher });
         const tag = await getTag(code, true);
         if (!tag) throw new ApiError(404, 'Este TAG no existe o todavía no fue creado.');
         const owner = await linkedOwner(tag.id);
         if (!owner || owner.user_id !== user.id) throw new ApiError(403, 'Primero vinculá este TAG a tu cuenta con su PIN.');
-        if (tag.activo) throw new ApiError(409, 'Este TAG ya está activado.');
-        return send(200, { token: issueSession(tag, 'activate', user.id), expires_in: SESSION_SECONDS,
+        const purpose = action === 'account-edit' ? 'edit' : 'activate';
+        if ((purpose === 'activate') === Boolean(tag.activo)) {
+          throw new ApiError(409, tag.activo ? 'Este TAG ya está activado.' : 'Primero completá la activación del TAG.');
+        }
+        return send(200, { token: issueSession(tag, purpose, user.id), expires_in: SESSION_SECONDS,
           data: { ...ownerTag(tag), updated_at: tag.updated_at ?? null } });
       }
       if (action === 'verify') {
@@ -265,4 +275,5 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
 
 module.exports = createHandler();
 module.exports.createHandler = createHandler;
+
 
