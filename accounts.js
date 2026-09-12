@@ -1,32 +1,21 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
 
-const path = location.pathname;
-const els = Object.fromEntries(['registerView','verifyView','loginView','recoverView','resetView','petsView','notice','accountEmail','petList'].map(id=>[id,document.getElementById(id)]));
-let supabase;
+const path=location.pathname;
+const els=Object.fromEntries(['registerView','verifyView','loginView','recoverView','resetView','petsView','notice','accountEmail','petList'].map(id=>[id,document.getElementById(id)]));
+const RESEND_DELAY=10*60*1000;let supabase;let resendTimer;
 function show(id){for(const key of ['registerView','verifyView','loginView','recoverView','resetView','petsView'])els[key].classList.toggle('hidden',key!==id)}
 function note(message,error=false){els.notice.textContent=message;els.notice.className='notice'+(error?' error':'');els.notice.style.display='block'}
-async function setup(){
-  const response=await fetch('/api/auth-config',{cache:'no-store'});const json=await response.json();
-  if(!response.ok)throw Error(json.error||'Las cuentas todavía no están disponibles.');
-  supabase=createClient(json.supabaseUrl,json.supabasePublishableKey,{auth:{flowType:'pkce',detectSessionInUrl:true}});
-  if(path==='/registro')return show('registerView');
-  if(path==='/verificar-email'){verifyEmail.value=sessionStorage.getItem('trackmypetVerifyEmail')||'';return show('verifyView')}
-  if(path==='/recuperar-clave')return show('recoverView');
-  if(path==='/restablecer-clave')return show('resetView');
-  if(path==='/mis-mascotas'){const {data:{session}}=await supabase.auth.getSession();if(!session){location.replace('/iniciar-sesion');return}return loadPets(session)}
-  show('loginView');
-}
-async function loadPets(session){
-  const user=session.user;els.accountEmail.textContent=user.email;
-  if(!user.email_confirmed_at){note('Confirmá tu email antes de vincular o administrar TAGs.',true);return show('petsView')}
-  const response=await fetch('/api/account',{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store'});const json=await response.json();
-  if(!response.ok){note(json.error||'No se pudieron cargar tus mascotas.',true);return show('petsView')}
-  els.petList.innerHTML=json.data.length?json.data.map(tag=>`<article class="pet"><h2>${escapeHtml(tag.nombre||'TAG '+tag.codigo)}</h2><p>Código ${escapeHtml(tag.codigo)} · ${tag.activo?'Activo':'Pendiente de activación'}</p></article>`).join(''):'<p>Aún no tenés TAGs vinculados.</p>';
-  show('petsView');
-}
+function setVerificationStep(email=''){verifyEmail.value=email;verifyEmailText.textContent=email;requestForm.classList.toggle('hidden',Boolean(email));verifyForm.classList.toggle('hidden',!email);if(email)updateResend()}
+function startCooldown(){sessionStorage.setItem('trackmypetVerifyResendAt',String(Date.now()+RESEND_DELAY));updateResend();clearInterval(resendTimer);resendTimer=setInterval(updateResend,1000)}
+function updateResend(){const until=Number(sessionStorage.getItem('trackmypetVerifyResendAt')||0);const remaining=Math.max(0,until-Date.now());if(!remaining){resendBtn.disabled=false;resendStatus.textContent='¿No recibiste el código?';clearInterval(resendTimer);return}const minutes=Math.floor(remaining/60000);const seconds=Math.ceil((remaining%60000)/1000);resendBtn.disabled=true;resendStatus.textContent='Podrás solicitar otro código en '+minutes+':'+String(seconds).padStart(2,'0')}
+async function sendVerificationCode(email){const {error}=await supabase.auth.resend({type:'signup',email});if(error){note(error.message,true);return false}sessionStorage.setItem('trackmypetVerifyEmail',email);setVerificationStep(email);startCooldown();note('Enviamos un código de 8 dígitos a tu correo.');return true}
+async function setup(){const response=await fetch('/api/auth-config',{cache:'no-store'});const json=await response.json();if(!response.ok)throw Error(json.error||'Las cuentas todavía no están disponibles.');supabase=createClient(json.supabaseUrl,json.supabasePublishableKey,{auth:{flowType:'pkce',detectSessionInUrl:true}});if(path==='/registro')return show('registerView');if(path==='/verificar-email'){setVerificationStep(sessionStorage.getItem('trackmypetVerifyEmail')||'');return show('verifyView')}if(path==='/recuperar-clave')return show('recoverView');if(path==='/restablecer-clave')return show('resetView');if(path==='/mis-mascotas'){const {data:{session}}=await supabase.auth.getSession();if(!session){location.replace('/iniciar-sesion');return}return loadPets(session)}show('loginView')}
+async function loadPets(session){const user=session.user;els.accountEmail.textContent=user.email;if(!user.email_confirmed_at){note('Confirmá tu email antes de vincular o administrar TAGs.',true);return show('petsView')}const response=await fetch('/api/account',{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store'});const json=await response.json();if(!response.ok){note(json.error||'No se pudieron cargar tus mascotas.',true);return show('petsView')}els.petList.innerHTML=json.data.length?json.data.map(tag=>`<article class="pet"><h2>${escapeHtml(tag.nombre||'TAG '+tag.codigo)}</h2><p>Código ${escapeHtml(tag.codigo)} · ${tag.activo?'Activo':'Pendiente de activación'}</p></article>`).join(''):'<p>Aún no tenés TAGs vinculados.</p>';show('petsView')}
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-document.getElementById('registerForm')?.addEventListener('submit',async e=>{e.preventDefault();const email=registerEmail.value.trim();const {error}=await supabase.auth.signUp({email,password:registerPassword.value});if(error)return note(error.message,true);sessionStorage.setItem('trackmypetVerifyEmail',email);location.replace('/verificar-email')});
-document.getElementById('verifyForm')?.addEventListener('submit',async e=>{e.preventDefault();const email=verifyEmail.value.trim();const token=verifyCode.value.trim();const {error}=await supabase.auth.verifyOtp({email,token,type:'signup'});if(error)return note('El código es inválido o venció. Solicitá uno nuevo.',true);sessionStorage.removeItem('trackmypetVerifyEmail');location.replace('/mis-mascotas')});
+document.getElementById('registerForm')?.addEventListener('submit',async e=>{e.preventDefault();const email=registerEmail.value.trim();const {error}=await supabase.auth.signUp({email,password:registerPassword.value});if(error)return note(error.message,true);sessionStorage.setItem('trackmypetVerifyEmail',email);startCooldown();location.replace('/verificar-email')});
+document.getElementById('requestForm')?.addEventListener('submit',async e=>{e.preventDefault();await sendVerificationCode(requestEmail.value.trim())});
+document.getElementById('verifyForm')?.addEventListener('submit',async e=>{e.preventDefault();const email=verifyEmail.value.trim();const token=verifyCode.value.trim();if(!/^\d{8}$/.test(token))return note('Ingresá el código de 8 dígitos.',true);const {error}=await supabase.auth.verifyOtp({email,token,type:'signup'});if(error)return note('El código es inválido o venció.',true);sessionStorage.removeItem('trackmypetVerifyEmail');sessionStorage.removeItem('trackmypetVerifyResendAt');location.replace('/mis-mascotas')});
+resendBtn?.addEventListener('click',async()=>{await sendVerificationCode(verifyEmail.value.trim())});
 document.getElementById('loginForm')?.addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.auth.signInWithPassword({email:loginEmail.value.trim(),password:loginPassword.value});if(error)return note('Email o contraseña incorrectos.',true);location.replace('/mis-mascotas')});
 document.getElementById('recoverForm')?.addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.auth.resetPasswordForEmail(recoverEmail.value.trim(),{redirectTo:location.origin+'/restablecer-clave'});note(error?error.message:'Si existe una cuenta con ese email, enviamos un enlace de recuperación.',Boolean(error))});
 document.getElementById('resetForm')?.addEventListener('submit',async e=>{e.preventDefault();const {error}=await supabase.auth.updateUser({password:resetPassword.value});if(error)return note(error.message,true);note('Contraseña actualizada. Ya podés iniciar sesión.');setTimeout(()=>location.replace('/iniciar-sesion'),800)});
