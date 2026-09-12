@@ -1,6 +1,7 @@
 {
   "routes": [
     { "handle": "filesystem" },
+    { "src": "/(registro|iniciar-sesion|recuperar-clave|restablecer-clave|mis-mascotas)", "dest": "/accounts.html" },
     { "src": "/api/.*", "status": 404 },
     { "src": "/.*", "dest": "/index.html" }
   ],
