@@ -1,4 +1,5 @@
 const { createHmac, timingSafeEqual, randomUUID } = require('node:crypto');
+const { OwnerAuthError, verifiedOwner } = require('./_lib/owner-auth');
 
 const BASE_FIELDS = 'codigo,activo,nombre,sexo,telefono,zona,info,foto1,foto2,foto3,updated_at';
 const LOST_FIELDS = 'perdida,zona_perdida,mensaje_perdida';
@@ -18,6 +19,7 @@ class ApiError extends Error {
 function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Date.now } = {}) {
   function lostStatusEnabled() { return env.TRACKMYPET_LOST_STATUS_ENABLED === 'true'; }
   function ownerProfileEnabled() { return env.TRACKMYPET_PROFILE_FIELDS_ENABLED === 'true'; }
+  function accountsEnabled() { return env.TRACKMYPET_ACCOUNTS_ENABLED === 'true'; }
   function config() {
     const url = env.SUPABASE_URL?.replace(/\/$/, '');
     const key = env.SUPABASE_SERVICE_ROLE_KEY;
@@ -53,6 +55,12 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       (privateFields ? selected + ',id,pin' : selected) + '&limit=1');
     return rows?.[0] || null;
   }
+  async function linkedOwner(tagId) {
+    if (!accountsEnabled()) return null;
+    const rows = await db('/rest/v1/tag_owners?tag_id=eq.' + encodeURIComponent(tagId) + '&select=user_id&limit=1');
+    return rows?.[0] || null;
+  }
+  async function tagIsLinked(tagId) { return Boolean(await linkedOwner(tagId)); }
   function publicTag(tag) {
     if (!tag) return null;
     if (!tag.activo) return { codigo: tag.codigo, activo: false };
@@ -66,8 +74,8 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     return data;
   }
   function fingerprint(tag) { return mac('pin:' + tag.id + ':' + tag.pin); }
-  function issueSession(tag, purpose) {
-    const payload = Buffer.from(JSON.stringify({ code: tag.codigo, id: tag.id, purpose,
+  function issueSession(tag, purpose, ownerId = null) {
+    const payload = Buffer.from(JSON.stringify({ code: tag.codigo, id: tag.id, purpose, owner: ownerId,
       exp: Math.floor(now() / 1000) + SESSION_SECONDS, fp: fingerprint(tag) })).toString('base64url');
     return payload + '.' + mac('session:' + payload);
   }
@@ -88,13 +96,26 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     if (!tag || session.id !== tag.id || !equal(session.fp, fingerprint(tag))) {
       throw new ApiError(401, 'Ingresá nuevamente el PIN para continuar.');
     }
+    const owner = await linkedOwner(tag.id);
+    if (owner && session.owner !== owner.user_id) {
+      throw new ApiError(409, 'Este TAG se administra desde la cuenta de su propietario.');
+    }
+    if (session.owner) {
+      const user = await verifiedOwner({ ...req, headers: { ...req.headers,
+        authorization: req.headers['x-owner-authorization'] } }, { env, fetcher });
+      if (!owner || user.id !== owner.user_id || user.id !== session.owner) {
+        throw new ApiError(403, 'No tenés permiso para administrar este TAG.');
+      }
+    }
     if ((session.purpose === 'activate') === Boolean(tag.activo)) {
       throw new ApiError(409, 'El estado del TAG cambió. Volvé a abrir la ficha.');
     }
     return { tag, session };
   }
   function checkPreview(code) {
-    if (env.VERCEL_ENV === 'preview' && code !== env.TRACKMYPET_PREVIEW_TEST_CODE) {
+    const stagingFixture = config().url === 'https://mdssoloncjsexuulgqeq.supabase.co' &&
+      ['000001', '000002', '000003'].includes(code);
+    if (env.VERCEL_ENV === 'preview' && code !== env.TRACKMYPET_PREVIEW_TEST_CODE && !stagingFixture) {
       throw new ApiError(403, 'Esta versión de prueba permite consultar fichas, pero no modificar TAGs reales.');
     }
   }
@@ -192,8 +213,21 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
       const body = await readBody(req);
       const { code, action } = body;
       if (typeof code !== 'string' || !/^[0-9]{4,10}$/.test(code)) throw new ApiError(400, 'Código inválido.');
-      if (!['verify','save','upload'].includes(action)) throw new ApiError(400, 'Acción inválida.');
+      if (!['verify','account-activate','account-edit','save','upload'].includes(action)) throw new ApiError(400, 'Acción inválida.');
       checkPreview(code);
+      if (action === 'account-activate' || action === 'account-edit') {
+        const user = await verifiedOwner(req, { env, fetcher });
+        const tag = await getTag(code, true);
+        if (!tag) throw new ApiError(404, 'Este TAG no existe o todavía no fue creado.');
+        const owner = await linkedOwner(tag.id);
+        if (!owner || owner.user_id !== user.id) throw new ApiError(403, 'Primero vinculá este TAG a tu cuenta con su PIN.');
+        const purpose = action === 'account-edit' ? 'edit' : 'activate';
+        if ((purpose === 'activate') === Boolean(tag.activo)) {
+          throw new ApiError(409, tag.activo ? 'Este TAG ya está activado.' : 'Primero completá la activación del TAG.');
+        }
+        return send(200, { token: issueSession(tag, purpose, user.id), expires_in: SESSION_SECONDS,
+          data: { ...ownerTag(tag), updated_at: tag.updated_at ?? null } });
+      }
       if (action === 'verify') {
         if (typeof body.pin !== 'string' || body.pin.length < 1 || body.pin.length > 128 || !['activate','edit'].includes(body.purpose)) {
           throw new ApiError(400, 'Revisá el PIN ingresado.');
@@ -205,6 +239,7 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
         if (!allowance?.allowed) throw new ApiError(429, 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.', allowance?.retry_after || 900);
         const tag = await getTag(code, true);
         if (!tag || !equal(mac('compare:' + body.pin.trim()), mac('compare:' + tag.pin))) throw new ApiError(401, 'PIN incorrecto o TAG inexistente.');
+        if (await tagIsLinked(tag.id)) throw new ApiError(409, 'Este TAG se administra desde la cuenta de su propietario.');
         if ((body.purpose === 'activate') === Boolean(tag.activo)) throw new ApiError(409, 'El estado del TAG cambió. Volvé a abrir la ficha.');
         return send(200, { token: issueSession(tag, body.purpose), expires_in: SESSION_SECONDS,
           data: { ...ownerTag(tag), updated_at: tag.updated_at ?? null } });
@@ -234,7 +269,8 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
     } catch (error) {
       if (error.retryAfter) res.setHeader('Retry-After', String(error.retryAfter));
       // Never log requests, PINs, tokens, upstream errors or secret configuration.
-      return send(error.status || 503, { error: error instanceof ApiError ? error.message : 'No se pudo conectar. Intentá nuevamente.' });
+      const known = error instanceof ApiError || error instanceof OwnerAuthError;
+      return send(error.status || 503, { error: known ? error.message : 'No se pudo conectar. Intentá nuevamente.' });
     }
   };
 }

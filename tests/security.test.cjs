@@ -8,7 +8,7 @@ const base = { id:'test-id', codigo:'9999999999', pin:'001234', activo:false,
   nombre:'Luna', sexo:'hembra', telefono:'099123456', zona:'Prado', info:'',
   perdida:false, zona_perdida:'', mensaje_perdida:'', foto1:null, foto2:null, foto3:null, updated_at:'2026-09-10T00:00:00.000Z' };
 function fixture(options = {}) {
-  const state = { tag:{...base,...options.tag}, calls:[], allowed:true, failSave:false, conflict:false, now:Date.parse('2026-09-10T01:00:00Z') };
+  const state = { tag:{...base,...options.tag}, calls:[], allowed:true, linked:Boolean(options.linked), owner:'owner-a', failSave:false, conflict:false, now:Date.parse('2026-09-10T01:00:00Z') };
   const env = { SUPABASE_URL:'https://test.supabase.co', SUPABASE_SERVICE_ROLE_KEY:'test-only-not-a-real-key',
     TRACKMYPET_LOST_STATUS_ENABLED:'true', TRACKMYPET_PROFILE_FIELDS_ENABLED:'true', ...options.env };
   const handler = createHandler({env,now:()=>state.now,fetcher:async (url, init) => {
@@ -16,21 +16,28 @@ function fixture(options = {}) {
     const payload = init.body && !(init.body instanceof Buffer) ? JSON.parse(init.body) : init.body;
     state.calls.push({u,init,payload});
     let result;
-    if (u.pathname.endsWith('/rpc/tmp_pin_attempt')) result = {allowed:state.allowed,retry_after:900};
+    if (u.pathname === '/auth/v1/user') {
+      const token = init.headers.Authorization;
+      if (!['Bearer owner-a','Bearer owner-b'].includes(token)) return new Response('{}',{status:401});
+      result = {id:token.slice(7),email_confirmed_at:'2026-09-10T00:00:00Z'};
+    }
+    else if (u.pathname.endsWith('/rpc/tmp_pin_attempt')) result = {allowed:state.allowed,retry_after:900};
     else if (u.pathname === '/rest/v1/tags' && init.method === 'PATCH') {
       if (state.failSave) return new Response('{}',{status:500});
       result = state.conflict ? [] : [{...state.tag,...payload}];
       if (!state.conflict) Object.assign(state.tag,payload);
     } else if (u.pathname === '/rest/v1/tags') {
       result = u.searchParams.get('codigo') === 'eq.' + state.tag.codigo ? [{...state.tag}] : [];
+    } else if (u.pathname === '/rest/v1/tag_owners') {
+      result = state.linked ? [{tag_id:state.tag.id,user_id:state.owner}] : [];
     } else if (u.pathname.startsWith('/storage/v1/object/pet-photos/')) result = {Key:'test'};
     else throw Error('Unexpected request: ' + url);
     return new Response(JSON.stringify(result),{status:200});
   }});
-  async function request(body, token, method='POST') {
+  async function request(body, token, method='POST', ownerToken) {
     const res = {headers:{},setHeader(k,v){this.headers[k]=v;},status(n){this.code=n;return this;},json(b){this.body=b;return this;}};
     await handler({method,url:method === 'GET' ? '/api/tag?code='+(body.code || base.codigo) : '/api/tag',
-      headers:{'content-type':'application/json','x-vercel-forwarded-for':'192.0.2.1',...(token ? {authorization:'Bearer '+token}:{})}, body},res);
+      headers:{'content-type':'application/json','x-vercel-forwarded-for':'192.0.2.1',...(token ? {authorization:'Bearer '+token}:{}),...(ownerToken ? {'x-owner-authorization':'Bearer '+ownerToken}:{})}, body},res);
     return res;
   }
   const verify = (purpose = state.tag.activo ? 'edit':'activate') => request({code:base.codigo,action:'verify',pin:base.pin,purpose});
@@ -38,7 +45,7 @@ function fixture(options = {}) {
     especie:'Perro',raza:'Golden Retriever',fecha_nacimiento:'2021-06-01',
     info_medica:'Es alérgica a ciertos alimentos (pollo y lácteos).',
     perdida:false,zona_perdida:'',mensaje_perdida:'',photos:[],updated_at:state.tag.updated_at});
-  return {state,request,verify,data};
+  return {state,env,request,verify,data};
 }
 test('public inactive response has no PIN, private id, draft contact or photo',async()=>{
   const f=fixture(); const r=await f.request({},null,'GET');
@@ -115,6 +122,12 @@ test('changing a PIN invalidates prior sessions',async()=>{
   const f=fixture();const token=(await f.verify()).body.token;f.state.tag.pin='changed';
   assert.equal((await f.request({code:base.codigo,action:'save',data:f.data()},token)).code,401);
 });
+test('linking a TAG disables PIN verification and invalidates an existing PIN session',async()=>{
+  const f=fixture({tag:{activo:true}});const token=(await f.verify()).body.token;
+  f.env.TRACKMYPET_ACCOUNTS_ENABLED='true';f.state.linked=true;
+  assert.equal((await f.verify()).code,409);
+  assert.equal((await f.request({code:base.codigo,action:'save',data:f.data()},token)).code,409);
+});
 test('activation saves all allowed fields but never overwrites PIN, code or id',async()=>{
   const f=fixture();const token=(await f.verify()).body.token;
   const r=await f.request({code:base.codigo,action:'save',data:{...f.data(),pin:'hacked',id:'other',codigo:'1234'}},token);
@@ -160,14 +173,49 @@ test('configuration errors fail closed and never disclose the key',async()=>{
   const f=fixture({env:{SUPABASE_SERVICE_ROLE_KEY:''}});const r=await f.request({},null,'GET');
   assert.equal(r.code,503);assert.equal(f.state.calls.length,0);
 });
-test('frontend compiles and contains no direct Supabase access or PIN comparison',()=>{
+test('additional fictional TAGs are allowed only against the exact staging project',async()=>{
+  for (const url of ['https://test.supabase.co','https://ohoklhgivqjqtkqzrrhi.supabase.co']) {
+    const f=fixture({env:{VERCEL_ENV:'preview',SUPABASE_URL:url}});
+    assert.equal((await f.request({code:'000001',action:'verify',pin:'0123',purpose:'activate'})).code,403);
+  }
+  const f=fixture({env:{VERCEL_ENV:'preview',SUPABASE_URL:'https://mdssoloncjsexuulgqeq.supabase.co'}});
+  assert.equal((await f.request({code:'000001',action:'verify',pin:'0123',purpose:'activate'})).code,401);
+  assert.ok(f.state.calls.some(c=>c.u.pathname.endsWith('/rpc/tmp_pin_attempt')));
+});
+test('frontend compiles and contains no direct sensitive table access or PIN comparison',()=>{
   const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
   const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
   scripts.forEach(s=>new vm.Script(s));
-  assert.doesNotMatch(html,/SUPABASE_KEY|createClient|tag\.pin|\.from\("tags"\)|deleteOldPhotos/);
+  assert.doesNotMatch(html,/SUPABASE_SERVICE_ROLE_KEY|tag\.pin|\.from\("tags"\)|deleteOldPhotos/);
   assert.match(html,/image\.alt = 'Foto de ' \+ petName/);
   assert.match(html,/escapeAttribute\(url\)/);
   assert.ok(html.indexOf('class="lost-control"') < html.indexOf('class="profile-form-grid"'));
   assert.match(html,/<input id="editLostStatus" type="checkbox" \/>/);
+});
+
+test('account editor requires the matching owner both when opening and saving',async()=>{
+  const f=fixture({tag:{activo:true},linked:true,env:{TRACKMYPET_ACCOUNTS_ENABLED:'true',SUPABASE_PUBLISHABLE_KEY:'public-test'}});
+  assert.equal((await f.request({code:base.codigo,action:'account-edit'},'owner-b')).code,403);
+  const opened=await f.request({code:base.codigo,action:'account-edit'},'owner-a');
+  assert.equal(opened.code,200);
+  assert.equal(opened.body.data.pin,undefined);
+  const body={code:base.codigo,action:'save',data:f.data()};
+  assert.equal((await f.request(body,opened.body.token)).code,401);
+  assert.equal((await f.request(body,opened.body.token,'POST','owner-b')).code,403);
+  assert.equal((await f.request(body,opened.body.token,'POST','expired')).code,401);
+  assert.equal((await f.request(body,opened.body.token,'POST','owner-a')).code,200);
+  f.state.owner='owner-b';
+  assert.equal((await f.request({...body,data:f.data()},opened.body.token,'POST','owner-a')).code,409);
+});
+
+test('account activation is resumable and account uploads require the matching owner',async()=>{
+  const f=fixture({linked:true,env:{TRACKMYPET_ACCOUNTS_ENABLED:'true',SUPABASE_PUBLISHABLE_KEY:'public-test'}});
+  assert.equal((await f.request({code:base.codigo,action:'account-edit'},'owner-a')).code,409);
+  const opened=await f.request({code:base.codigo,action:'account-activate'},'owner-a');
+  assert.equal(opened.code,200);
+  assert.equal((await f.request({code:base.codigo,action:'account-activate'},'owner-a')).code,200);
+  const body={code:base.codigo,action:'upload',image:Buffer.from([255,216,255,224,255,217]).toString('base64')};
+  assert.equal((await f.request(body,opened.body.token,'POST','owner-b')).code,403);
+  assert.equal((await f.request(body,opened.body.token,'POST','owner-a')).code,200);
 });
 

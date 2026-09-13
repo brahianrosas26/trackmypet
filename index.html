@@ -927,16 +927,21 @@
         <div class="top"><div class="pet-photo">🐾</div></div>
         <div class="body">
           <h2>Activá tu TAG</h2>
-          <p class="subtitle">Ingresá el PIN que viene en el embalaje para comenzar la activación.</p>
+          <p class="subtitle">Para activar este TAG, vinculalo a tu cuenta.</p>
+          <div id="activationAccountOptions">
+            <button class="btn btn-primary" id="createAccountForTag" type="button">Crear cuenta</button>
+            <button class="btn btn-secondary" id="loginForTag" type="button">Ya tengo cuenta</button>
+            <button class="back-btn" id="activateWithPin" type="button">Continuar sin cuenta usando PIN</button>
+          </div>
 
           <div id="activationError" class="error">PIN incorrecto. Revisá el PIN del sobre.</div>
 
-          <form class="form" id="activationForm">
+          <form class="form" id="activationForm" hidden>
             <div class="field"><label for="activationPin">PIN del TAG</label><input id="activationPin" type="password" inputmode="numeric" placeholder="Ej: 8472" required /></div>
             <button class="btn btn-primary" type="submit">Activar TAG</button>
           </form>
 
-          <p class="note">El PIN sirve para activar y editar. No lo compartas públicamente.</p>
+          <p class="note">El PIN sirve para vincular y activar tu TAG. No lo compartas públicamente.</p>
         </div>
       </div>
       <p class="footer-text">TrackMyPet · Identificación QR para mascotas</p>
@@ -1110,16 +1115,29 @@ Identificación QR para mascotas.</p>
   <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
   <script>
     let ownerSession = null;
+    let accountSession = null;
+    let accountClient = null;
+    let usingAccount = false;
     let ownerVersion = null;
     let saveMode = null;
+    const accountActivationRequested = new URLSearchParams(window.location.search).get('account-activate') === '1';
+    const accountEditRequested = new URLSearchParams(window.location.search).get('account-edit') === '1';
+    let accountEditOpened = false;
 
     async function api(action, payload = {}) {
+      let accountHeaders = {};
+      if (usingAccount && action !== 'get') {
+        const { data: { session } } = await accountClient.auth.getSession();
+        if (!session) throw new Error('Tu sesión venció. Volvé a Mis mascotas e iniciá sesión.');
+        accountHeaders = { 'X-Owner-Authorization': 'Bearer ' + session.access_token };
+      }
       const response = await fetch(action === 'get' ? '/api/tag?code=' + encodeURIComponent(tagCode) : '/api/tag', {
         method: action === 'get' ? 'GET' : 'POST',
         cache: 'no-store',
         headers: action === 'get' ? {} : {
           'Content-Type': 'application/json',
-          ...(ownerSession ? { Authorization: 'Bearer ' + ownerSession } : {})
+          ...accountHeaders,
+          ...((ownerSession || accountSession) ? { Authorization: 'Bearer ' + (ownerSession || accountSession) } : {})
         },
         body: action === 'get' ? undefined : JSON.stringify({ action, code: tagCode, ...payload })
       });
@@ -1135,11 +1153,40 @@ Identificación QR para mascotas.</p>
     }
 
     async function verifyPin(pin, purpose) {
+      usingAccount = false;
       const result = await api('verify', { pin: pin.trim(), purpose });
       ownerSession = result.token;
       ownerVersion = result.data.updated_at ?? null;
       saveMode = purpose;
       return result.data;
+    }
+
+    async function activateFromAccount(purpose = 'activate') {
+      const cfgResponse = await fetch('/api/auth-config', { cache: 'no-store' });
+      const cfg = await cfgResponse.json();
+      if (!cfgResponse.ok) throw new Error(cfg.error || 'No se pudo iniciar la activación.');
+      const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');
+      const client = createClient(cfg.supabaseUrl, cfg.supabasePublishableKey);
+      accountClient = client;
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) { window.location.replace('/iniciar-sesion?tag=' + encodeURIComponent(tagCode)); return; }
+      accountSession = session.access_token;
+      ownerSession = null;
+      usingAccount = true;
+      try {
+        const result = await api(purpose === 'edit' ? 'account-edit' : 'account-activate');
+        ownerSession = result.token;
+        ownerVersion = result.data.updated_at ?? null;
+        saveMode = purpose;
+        if (purpose === 'edit') {
+          await fillEditForm(result.data);
+          els.editSuccess.style.display = 'none';
+          showScreen('edit');
+        } else {
+          activationPinVerified = true;
+          showScreen('petSetup');
+        }
+      } finally { accountSession = null; }
     }
 
     function escapeAttribute(value) {
@@ -1184,6 +1231,10 @@ let activationPinVerified = false;
 
     const els = {
       activationForm: document.getElementById("activationForm"),
+      activationAccountOptions: document.getElementById("activationAccountOptions"),
+      createAccountForTag: document.getElementById("createAccountForTag"),
+      loginForTag: document.getElementById("loginForTag"),
+      activateWithPin: document.getElementById("activateWithPin"),
       petSetupForm: document.getElementById("petSetupForm"),
       activationPin: document.getElementById("activationPin"),
       petName: document.getElementById("petName"),
@@ -1322,7 +1373,28 @@ function showLandingOrTag() {
       }
 
       if (!data.activo) {
+        if (accountActivationRequested) {
+          activateFromAccount().catch(error => {
+            els.activationError.textContent = error.message;
+            els.activationError.style.display = 'block';
+            showScreen('activation');
+          });
+          return;
+        }
+        els.activationAccountOptions.hidden = false;
+        els.activationForm.hidden = true;
         showScreen("activation");
+        return;
+      }
+
+      if (accountEditRequested && !accountEditOpened) {
+        accountEditOpened = true;
+        try { await activateFromAccount('edit'); }
+        catch (error) {
+          els.pinError.textContent = error.message;
+          els.pinError.style.display = 'block';
+          showScreen('pin');
+        }
         return;
       }
 
@@ -1534,6 +1606,18 @@ editDeletedUrls = [];
 renderEditPhotoBoxes();
     }
 
+    els.createAccountForTag.addEventListener('click', function() {
+      window.location.href = '/registro?tag=' + encodeURIComponent(tagCode);
+    });
+    els.loginForTag.addEventListener('click', function() {
+      window.location.href = '/iniciar-sesion?tag=' + encodeURIComponent(tagCode);
+    });
+    els.activateWithPin.addEventListener('click', function() {
+      els.activationAccountOptions.hidden = true;
+      els.activationForm.hidden = false;
+      els.activationPin.focus();
+    });
+
     els.activationForm.addEventListener('submit', async function(event) {
       event.preventDefault();
       if (els.activationForm.classList.contains('loading')) return;
@@ -1709,4 +1793,5 @@ renderActivationPhotoBoxes();
   </script>
 </body>
 </html>
+
 
