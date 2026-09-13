@@ -99,7 +99,7 @@ async function setup(){
   if(path==='/recuperar-clave'){setRecoveryStep(sessionStorage.getItem('trackmypetRecoverEmail')||'');return show('recoverView');}
   if(path==='/restablecer-clave'){
     const {data:{session}}=await supabase.auth.getSession();
-    if(!session){note('El enlace de recuperación no es válido o venció. Solicitá uno nuevo.',true);return show('recoverView')}
+    if(!session){note('El código de recuperación no es válido, venció o ya fue utilizado. Solicitá uno nuevo.',true);return show('recoverView')}
     return show('resetView');
   }
   if(path==='/mis-mascotas'){
