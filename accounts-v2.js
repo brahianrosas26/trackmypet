@@ -2,9 +2,9 @@ const path=location.pathname;
 const query=new URLSearchParams(location.search);
 const els=Object.fromEntries(['registerView','verifyView','loginView','recoverView','resetView','petsView','notice','accountEmail','petList'].map(id=>[id,document.getElementById(id)]));
 const $=id=>document.getElementById(id);
-const registerForm=$('registerForm'),registerEmail=$('registerEmail'),registerPassword=$('registerPassword'),registerPasswordConfirm=$('registerPasswordConfirm'),requestForm=$('requestForm'),verifyForm=$('verifyForm'),verifyEmail=$('verifyEmail'),verifyEmailText=$('verifyEmailText'),verifyCode=$('verifyCode'),resendBtn=$('resendBtn'),resendStatus=$('resendStatus'),loginForm=$('loginForm'),loginEmail=$('loginEmail'),loginPassword=$('loginPassword'),recoverForm=$('recoverForm'),recoverEmail=$('recoverEmail'),resetForm=$('resetForm'),resetPassword=$('resetPassword'),resetPasswordConfirm=$('resetPasswordConfirm'),logoutBtn=$('logoutBtn'),claimForm=$('claimForm'),claimTitle=$('claimTitle'),claimIntro=$('claimIntro'),claimCode=$('claimCode'),claimCodeWrap=$('claimCodeWrap'),claimPin=$('claimPin');
+const registerForm=$('registerForm'),registerEmail=$('registerEmail'),registerPassword=$('registerPassword'),registerPasswordConfirm=$('registerPasswordConfirm'),requestForm=$('requestForm'),verifyForm=$('verifyForm'),verifyEmail=$('verifyEmail'),verifyEmailText=$('verifyEmailText'),verifyCode=$('verifyCode'),resendBtn=$('resendBtn'),resendStatus=$('resendStatus'),loginForm=$('loginForm'),loginEmail=$('loginEmail'),loginPassword=$('loginPassword'),recoverRequestPanel=$('recoverRequestPanel'),recoverRequestForm=$('recoverRequestForm'),recoverEmail=$('recoverEmail'),recoverVerifyForm=$('recoverVerifyForm'),recoverVerifyEmail=$('recoverVerifyEmail'),recoverEmailText=$('recoverEmailText'),recoverCode=$('recoverCode'),recoverResendBtn=$('recoverResendBtn'),recoverResendStatus=$('recoverResendStatus'),resetForm=$('resetForm'),resetPassword=$('resetPassword'),resetPasswordConfirm=$('resetPasswordConfirm'),logoutBtn=$('logoutBtn'),claimForm=$('claimForm'),claimTitle=$('claimTitle'),claimIntro=$('claimIntro'),claimCode=$('claimCode'),claimCodeWrap=$('claimCodeWrap'),claimPin=$('claimPin');
 const RESEND_DELAY=10*60*1000;
-let supabase,resendTimer;
+let supabase,resendTimer,recoverResendTimer;
 
 function pendingTag(){
   const incoming=query.get('tag');
@@ -23,7 +23,7 @@ function busy(form,on,label){const button=form?.querySelector('button[type="subm
 function authMessage(error,context){
   const message=String(error?.message||'').toLowerCase();
   if(message.includes('rate')||message.includes('too many'))return 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.';
-  if(message.includes('expired'))return context==='verify'?'El código venció. Solicitá uno nuevo.':'El enlace venció. Solicitá otro correo de recuperación.';
+  if(message.includes('expired'))return context==='verify'||context==='recover-verify'?'El código venció. Solicitá uno nuevo.':'No pudimos enviar el código. Intentá nuevamente.';
   if(context==='login'&&(message.includes('confirm')||message.includes('verified')))return 'Tu email todavía no está confirmado. Revisá el código que enviamos a tu correo.';
   if(context==='login')return 'Email o contraseña incorrectos.';
   if(context==='verify')return 'El código es incorrecto, venció o ya fue utilizado.';
@@ -60,6 +60,31 @@ async function sendVerificationCode(email){
   }catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true);return false}
   finally{resendBtn.textContent='Reenviar código';updateResend()}
 }
+function setRecoveryStep(email=''){
+  recoverVerifyEmail.value=email;
+  recoverEmailText.textContent=email;
+  recoverRequestPanel.classList.toggle('hidden',Boolean(email));
+  recoverVerifyForm.classList.toggle('hidden',!email);
+  if(email){updateRecoveryCooldown();clearInterval(recoverResendTimer);recoverResendTimer=setInterval(updateRecoveryCooldown,1000)}
+}
+function startRecoveryCooldown(){
+  sessionStorage.setItem('trackmypetRecoverResendAt',String(Date.now()+RESEND_DELAY));
+  updateRecoveryCooldown();clearInterval(recoverResendTimer);recoverResendTimer=setInterval(updateRecoveryCooldown,1000);
+}
+function updateRecoveryCooldown(){
+  const until=Number(sessionStorage.getItem('trackmypetRecoverResendAt')||0),remaining=Math.max(0,until-Date.now());
+  if(!remaining){recoverResendBtn.disabled=false;recoverResendStatus.textContent='¿No recibiste el código?';clearInterval(recoverResendTimer);return}
+  const totalSeconds=Math.ceil(remaining/1000),minutes=Math.floor(totalSeconds/60),seconds=totalSeconds%60;
+  recoverResendBtn.disabled=true;recoverResendStatus.textContent='Podrás solicitar otro código en '+minutes+':'+String(seconds).padStart(2,'0');
+}
+async function sendRecoveryCode(email){
+  clearNote();
+  const {error}=await supabase.auth.resetPasswordForEmail(email);
+  if(error){note(authMessage(error,'recover'),true);return false}
+  sessionStorage.setItem('trackmypetRecoverEmail',email);startRecoveryCooldown();setRecoveryStep(email);
+  note('Si existe una cuenta con ese email, enviamos un código de recuperación. Revisá también Spam o Correo no deseado.');
+  return true;
+}
 async function setup(){
   pendingTag();carryTagLinks();
   const response=await fetch('/api/auth-config',{cache:'no-store'}),json=await response.json();
@@ -71,10 +96,10 @@ async function setup(){
     const email=sessionStorage.getItem('trackmypetVerifyEmail')||'';
     setVerificationStep(email);return show('verifyView');
   }
-  if(path==='/recuperar-clave') return show('recoverView');
+  if(path==='/recuperar-clave'){setRecoveryStep(sessionStorage.getItem('trackmypetRecoverEmail')||'');return show('recoverView');}
   if(path==='/restablecer-clave'){
     const {data:{session}}=await supabase.auth.getSession();
-    if(!session){note('El enlace de recuperación no es válido o venció. Solicitá uno nuevo.',true);return show('recoverView')}
+    if(!session){note('El código de recuperación no es válido, venció o ya fue utilizado. Solicitá uno nuevo.',true);return show('recoverView')}
     return show('resetView');
   }
   if(path==='/mis-mascotas'){
@@ -132,11 +157,27 @@ loginForm?.addEventListener('submit',async e=>{
   if(error)return note(authMessage(error,'login'),true);location.replace(destination('/mis-mascotas'))}
   catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(loginForm,false,'')}
 });
-recoverForm?.addEventListener('submit',async e=>{
-  e.preventDefault();clearNote();busy(recoverForm,true,'Enviando…');
-  try{const {error}=await supabase.auth.resetPasswordForEmail(recoverEmail.value.trim(),{redirectTo:location.origin+'/restablecer-clave'});
-  note(error?authMessage(error,'recover'):'Si existe una cuenta con ese email, enviamos un enlace de recuperación.',Boolean(error))}
-  catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(recoverForm,false,'')}
+recoverRequestForm?.addEventListener('submit',async e=>{
+  e.preventDefault();clearNote();busy(recoverRequestForm,true,'Enviando…');
+  try{await sendRecoveryCode(recoverEmail.value.trim())}
+  catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(recoverRequestForm,false,'')}
+});
+recoverVerifyForm?.addEventListener('submit',async e=>{
+  e.preventDefault();clearNote();const email=recoverVerifyEmail.value.trim(),token=recoverCode.value.trim();
+  if(!/^\d{8}$/.test(token))return note('Ingresá el código de 8 dígitos.',true);
+  busy(recoverVerifyForm,true,'Confirmando…');
+  try{
+    const {error}=await supabase.auth.verifyOtp({email,token,type:'recovery'});
+    if(error)return note(authMessage(error,'recover-verify'),true);
+    sessionStorage.removeItem('trackmypetRecoverEmail');sessionStorage.removeItem('trackmypetRecoverResendAt');
+    location.replace('/restablecer-clave');
+  }catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(recoverVerifyForm,false,'')}
+});
+recoverResendBtn?.addEventListener('click',async()=>{
+  recoverResendBtn.disabled=true;recoverResendBtn.textContent='Enviando…';
+  try{await sendRecoveryCode(recoverVerifyEmail.value.trim())}
+  catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}
+  finally{recoverResendBtn.textContent='Reenviar código';updateRecoveryCooldown()}
 });
 resetForm?.addEventListener('submit',async e=>{
   e.preventDefault();clearNote();
