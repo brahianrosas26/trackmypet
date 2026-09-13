@@ -116,16 +116,16 @@ async function setup(){
 function showClaim(open=true){
   claimForm.classList.toggle('hidden',!open);
   addTagBtn.setAttribute('aria-expanded',String(open));
-  if(open&&pendingTag()) setTimeout(()=>claimPin.focus(),0);
+  if(open) setTimeout(()=>claimPin.focus(),0);
 }
 function openAddTag(){
   clearNote();claimForm.reset();
   const tag=pendingTag();
   claimCodeWrap.classList.add('hidden');
-  claimPin.closest('.field').classList.toggle('hidden',!tag);
-  claimForm.querySelector('.primary').classList.toggle('hidden',!tag);
+  claimPin.closest('.field').classList.remove('hidden');
+  claimForm.querySelector('.primary').classList.remove('hidden');
   if(tag){claimCode.value=tag;claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá únicamente el PIN de tu TAG para vincularlo a tu cuenta.'}
-  else {claimTitle.textContent='Agregar TAG';claimIntro.textContent='Escaneá el código QR de tu TAG con la cámara del celular. Al abrirlo, TrackMyPet reconocerá el TAG y te pedirá únicamente el PIN.'}
+  else {claimTitle.textContent='Agregar TAG';claimIntro.textContent='Ingresá el PIN de tu TAG para vincularlo a tu cuenta.'}
   showClaim(true);
 }
 function petCard(tag){
