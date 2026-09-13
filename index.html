@@ -931,7 +931,6 @@
           <div id="activationAccountOptions">
             <button class="btn btn-primary" id="createAccountForTag" type="button">Crear cuenta</button>
             <button class="btn btn-secondary" id="loginForTag" type="button">Ya tengo cuenta</button>
-            <button class="back-btn" id="activateWithPin" type="button">Continuar sin cuenta usando PIN</button>
           </div>
 
           <div id="activationError" class="error">PIN incorrecto. Revisá el PIN del sobre.</div>
@@ -1234,7 +1233,6 @@ let activationPinVerified = false;
       activationAccountOptions: document.getElementById("activationAccountOptions"),
       createAccountForTag: document.getElementById("createAccountForTag"),
       loginForTag: document.getElementById("loginForTag"),
-      activateWithPin: document.getElementById("activateWithPin"),
       petSetupForm: document.getElementById("petSetupForm"),
       activationPin: document.getElementById("activationPin"),
       petName: document.getElementById("petName"),
@@ -1611,11 +1609,6 @@ renderEditPhotoBoxes();
     });
     els.loginForTag.addEventListener('click', function() {
       window.location.href = '/iniciar-sesion?tag=' + encodeURIComponent(tagCode);
-    });
-    els.activateWithPin.addEventListener('click', function() {
-      els.activationAccountOptions.hidden = true;
-      els.activationForm.hidden = false;
-      els.activationPin.focus();
     });
 
     els.activationForm.addEventListener('submit', async function(event) {
