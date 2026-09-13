@@ -1,5 +1,3 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
-
 const path=location.pathname;
 const query=new URLSearchParams(location.search);
 const els=Object.fromEntries(['registerView','verifyView','loginView','recoverView','resetView','petsView','notice','accountEmail','petList'].map(id=>[id,document.getElementById(id)]));
@@ -66,6 +64,7 @@ async function setup(){
   pendingTag();carryTagLinks();
   const response=await fetch('/api/auth-config',{cache:'no-store'}),json=await response.json();
   if(!response.ok) throw Error(json.error||'Las cuentas todavía no están disponibles.');
+  const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');
   supabase=createClient(json.supabaseUrl,json.supabasePublishableKey,{auth:{flowType:'pkce',detectSessionInUrl:true}});
   if(path==='/registro') return show('registerView');
   if(path==='/verificar-email'){
@@ -77,6 +76,7 @@ async function setup(){
     const {data:{session}}=await supabase.auth.getSession();
     if(!session){note('El enlace de recuperación no es válido o venció. Solicitá uno nuevo.',true);return show('recoverView')}
     return show('resetView');
+  }
   if(path==='/mis-mascotas'){
     const {data:{session}}=await supabase.auth.getSession();
     if(!session){location.replace(destination('/iniciar-sesion'));return}
