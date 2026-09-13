@@ -116,7 +116,17 @@ async function setup(){
 function showClaim(open=true){
   claimForm.classList.toggle('hidden',!open);
   addTagBtn.setAttribute('aria-expanded',String(open));
-  if(open) setTimeout(()=>claimCodeWrap.classList.contains('hidden')?claimPin.focus():claimCode.focus(),0);
+  if(open&&pendingTag()) setTimeout(()=>claimPin.focus(),0);
+}
+function openAddTag(){
+  clearNote();claimForm.reset();
+  const tag=pendingTag();
+  claimCodeWrap.classList.add('hidden');
+  claimPin.closest('.field').classList.toggle('hidden',!tag);
+  claimForm.querySelector('.primary').classList.toggle('hidden',!tag);
+  if(tag){claimCode.value=tag;claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá únicamente el PIN de tu TAG para vincularlo a tu cuenta.'}
+  else {claimTitle.textContent='Agregar TAG';claimIntro.textContent='Escaneá el código QR de tu TAG con la cámara del celular. Al abrirlo, TrackMyPet reconocerá el TAG y te pedirá únicamente el PIN.'}
+  showClaim(true);
 }
 function petCard(tag){
   const name=escapeHtml(tag.nombre||'TAG '+tag.codigo),code=escapeHtml(tag.codigo);
@@ -132,10 +142,11 @@ async function loadPets(session){
   if(!response.ok){note(json.error||'No se pudieron cargar tus mascotas.',true);return show('petsView')}
   const tags=json.data||[];
   petCount.textContent=tags.length===1?'1 TAG vinculado':tags.length+' TAGs vinculados';
-  els.petList.innerHTML=tags.length?tags.map(petCard).join(''):'<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h16M12 4v16"/></svg><strong>Aún no tenés TAGs vinculados</strong><p>Agregá el primero usando el código y PIN impresos con tu TAG.</p></div>';
+  els.petList.innerHTML=tags.length?tags.map(petCard).join(''):'<button class="empty-state" id="emptyAddTag" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h16M12 4v16"/></svg><strong>Aún no tenés TAGs vinculados</strong><p>Tocá acá para agregar tu primer TAG. Solo necesitás escanear su QR y tener el PIN a mano.</p></button>';
+  $('emptyAddTag')?.addEventListener('click',openAddTag);
   const tag=pendingTag();
   if(tag){claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá el PIN del TAG que acabás de escanear.';claimCode.value=tag;claimCodeWrap.classList.add('hidden');showClaim(true)}
-  else {claimTitle.textContent='Agregar TAG';claimIntro.textContent='Ingresá el código y PIN para vincularlo a tu cuenta.';claimCodeWrap.classList.remove('hidden');showClaim(false)}
+  else {claimCodeWrap.classList.add('hidden');claimPin.closest('.field').classList.add('hidden');claimForm.querySelector('.primary').classList.add('hidden');showClaim(false)}
   show('petsView');
 }
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
@@ -201,7 +212,7 @@ resetForm?.addEventListener('submit',async e=>{
   if(error)return note(authMessage(error,'reset'),true);await supabase.auth.signOut();note('Contraseña actualizada. Ya podés iniciar sesión.');setTimeout(()=>location.replace('/iniciar-sesion'),1200)}
   catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(resetForm,false,'')}
 });
-addTagBtn?.addEventListener('click',()=>{clearNote();claimForm.reset();claimCodeWrap.classList.remove('hidden');claimTitle.textContent='Agregar TAG';claimIntro.textContent='Ingresá el código y PIN para vincularlo a tu cuenta.';showClaim(claimForm.classList.contains('hidden'))});
+addTagBtn?.addEventListener('click',()=>claimForm.classList.contains('hidden')?openAddTag():showClaim(false));
 cancelClaimBtn?.addEventListener('click',()=>{claimForm.reset();showClaim(false)});
 logoutBtn?.addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();if(error)return note('No se pudo cerrar la sesión. Intentá nuevamente.',true);sessionStorage.removeItem('trackmypetPendingTag');location.replace('/iniciar-sesion')});
 claimForm?.addEventListener('submit',async e=>{
