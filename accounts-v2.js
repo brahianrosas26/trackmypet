@@ -2,7 +2,7 @@ const path=location.pathname;
 const query=new URLSearchParams(location.search);
 const els=Object.fromEntries(['registerView','verifyView','loginView','recoverView','resetView','petsView','notice','accountEmail','petList'].map(id=>[id,document.getElementById(id)]));
 const $=id=>document.getElementById(id);
-const registerForm=$('registerForm'),registerEmail=$('registerEmail'),registerPassword=$('registerPassword'),registerPasswordConfirm=$('registerPasswordConfirm'),requestForm=$('requestForm'),verifyForm=$('verifyForm'),verifyEmail=$('verifyEmail'),verifyEmailText=$('verifyEmailText'),verifyCode=$('verifyCode'),resendBtn=$('resendBtn'),resendStatus=$('resendStatus'),loginForm=$('loginForm'),loginEmail=$('loginEmail'),loginPassword=$('loginPassword'),recoverRequestPanel=$('recoverRequestPanel'),recoverRequestForm=$('recoverRequestForm'),recoverEmail=$('recoverEmail'),recoverVerifyForm=$('recoverVerifyForm'),recoverVerifyEmail=$('recoverVerifyEmail'),recoverEmailText=$('recoverEmailText'),recoverCode=$('recoverCode'),recoverResendBtn=$('recoverResendBtn'),recoverResendStatus=$('recoverResendStatus'),resetForm=$('resetForm'),resetPassword=$('resetPassword'),resetPasswordConfirm=$('resetPasswordConfirm'),logoutBtn=$('logoutBtn'),claimForm=$('claimForm'),claimTitle=$('claimTitle'),claimIntro=$('claimIntro'),claimCode=$('claimCode'),claimCodeWrap=$('claimCodeWrap'),claimPin=$('claimPin');
+const registerForm=$('registerForm'),registerEmail=$('registerEmail'),registerPassword=$('registerPassword'),registerPasswordConfirm=$('registerPasswordConfirm'),requestForm=$('requestForm'),verifyForm=$('verifyForm'),verifyEmail=$('verifyEmail'),verifyEmailText=$('verifyEmailText'),verifyCode=$('verifyCode'),resendBtn=$('resendBtn'),resendStatus=$('resendStatus'),loginForm=$('loginForm'),loginEmail=$('loginEmail'),loginPassword=$('loginPassword'),recoverRequestPanel=$('recoverRequestPanel'),recoverRequestForm=$('recoverRequestForm'),recoverEmail=$('recoverEmail'),recoverVerifyForm=$('recoverVerifyForm'),recoverVerifyEmail=$('recoverVerifyEmail'),recoverEmailText=$('recoverEmailText'),recoverCode=$('recoverCode'),recoverResendBtn=$('recoverResendBtn'),recoverResendStatus=$('recoverResendStatus'),resetForm=$('resetForm'),resetPassword=$('resetPassword'),resetPasswordConfirm=$('resetPasswordConfirm'),logoutBtn=$('logoutBtn'),addTagBtn=$('addTagBtn'),cancelClaimBtn=$('cancelClaimBtn'),petCount=$('petCount'),claimForm=$('claimForm'),claimTitle=$('claimTitle'),claimIntro=$('claimIntro'),claimCode=$('claimCode'),claimCodeWrap=$('claimCodeWrap'),claimPin=$('claimPin');
 const RESEND_DELAY=10*60*1000;
 let supabase,resendTimer,recoverResendTimer;
 
@@ -113,15 +113,40 @@ async function setup(){
   }
   show('loginView');
 }
+function showClaim(open=true){
+  claimForm.classList.toggle('hidden',!open);
+  addTagBtn.setAttribute('aria-expanded',String(open));
+  if(open) setTimeout(()=>claimPin.focus(),0);
+}
+function openAddTag(){
+  clearNote();claimForm.reset();
+  const tag=pendingTag();
+  claimCodeWrap.classList.add('hidden');
+  claimPin.closest('.field').classList.remove('hidden');
+  claimForm.querySelector('.primary').classList.remove('hidden');
+  if(tag){claimCode.value=tag;claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá únicamente el PIN de tu TAG para vincularlo a tu cuenta.'}
+  else {claimTitle.textContent='Agregar TAG';claimIntro.textContent='Ingresá el PIN de tu TAG para vincularlo a tu cuenta.'}
+  showClaim(true);
+}
+function petCard(tag){
+  const name=escapeHtml(tag.nombre||'TAG '+tag.codigo),code=escapeHtml(tag.codigo);
+  const photo=typeof tag.foto1==='string'&&/^https:\/\//.test(tag.foto1)?'<img class="pet-photo" src="'+escapeHtml(tag.foto1)+'" alt="Foto de '+name+'" loading="lazy"/>':'<div class="pet-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 11.5c-1.4-1.1-2-2.7-1.3-3.6.7-.8 2.3-.5 3.6.7M15.5 11.5c1.4-1.1 2-2.7 1.3-3.6-.7-.8-2.3-.5-3.6.7"/><path d="M7.4 17.2c.8-2.7 2.4-4.2 4.6-4.2s3.8 1.5 4.6 4.2c.4 1.4-.7 2.8-2.2 2.8H9.6c-1.5 0-2.6-1.4-2.2-2.8Z"/></svg></div>';
+  const status=tag.perdida?'<span class="badge lost">Está perdida</span>':tag.activo?'<span class="badge">Activo</span>':'<span class="badge pending">Pendiente</span>';
+  const action=tag.activo?'Editar perfil':'Continuar activación';
+  return '<article class="pet">'+photo+'<div><h2>'+name+'</h2><div class="pet-meta"><span>Código '+code+'</span>'+status+'</div><div class="pet-actions"><a class="edit" href="/'+encodeURIComponent(tag.codigo)+'?'+(tag.activo?'account-edit':'account-activate')+'=1">'+action+'</a><a class="view" href="/'+encodeURIComponent(tag.codigo)+'">Ver ficha</a></div></div></article>';
+}
 async function loadPets(session){
   const user=session.user;els.accountEmail.textContent=user.email;
   if(!user.email_confirmed_at){note('Confirmá tu email antes de vincular o administrar TAGs.',true);return show('petsView')}
   const response=await fetch('/api/account',{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store'}),json=await response.json();
   if(!response.ok){note(json.error||'No se pudieron cargar tus mascotas.',true);return show('petsView')}
-  els.petList.innerHTML=json.data.length?json.data.map(tag=>`<article class="pet"><h2>${escapeHtml(tag.nombre||'TAG '+tag.codigo)}</h2><p>Código ${escapeHtml(tag.codigo)} · ${tag.activo?'Activo':'Pendiente de activación'}</p><div class="links"><a href="/${encodeURIComponent(tag.codigo)}?${tag.activo?'account-edit':'account-activate'}=1">${tag.activo?'Editar perfil':'Continuar activación'}</a><a href="/${encodeURIComponent(tag.codigo)}">Ver ficha</a></div></article>`).join(''):'<p>Aún no tenés TAGs vinculados. Agregá tu primer TAG con su código y PIN.</p>';
+  const tags=json.data||[];
+  petCount.textContent=tags.length===1?'1 TAG vinculado':tags.length+' TAGs vinculados';
+  els.petList.innerHTML=tags.length?tags.map(petCard).join(''):'<button class="empty-state" id="emptyAddTag" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h16M12 4v16"/></svg><strong>Aún no tenés TAGs vinculados</strong><p>Tocá acá para agregar tu primer TAG. Tené el PIN a mano.</p></button>';
+  $('emptyAddTag')?.addEventListener('click',openAddTag);
   const tag=pendingTag();
-  if(tag){claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá el PIN del TAG que acabás de escanear.';claimCode.value=tag;claimCodeWrap.classList.add('hidden')}
-  else {claimTitle.textContent='Agregar TAG';claimIntro.textContent='Ingresá el código y PIN para vincularlo a tu cuenta.';claimCodeWrap.classList.remove('hidden')}
+  if(tag){claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá el PIN del TAG que acabás de escanear.';claimCode.value=tag;claimCodeWrap.classList.add('hidden');showClaim(true)}
+  else {claimCodeWrap.classList.add('hidden');claimPin.closest('.field').classList.add('hidden');claimForm.querySelector('.primary').classList.add('hidden');showClaim(false)}
   show('petsView');
 }
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
@@ -187,6 +212,8 @@ resetForm?.addEventListener('submit',async e=>{
   if(error)return note(authMessage(error,'reset'),true);await supabase.auth.signOut();note('Contraseña actualizada. Ya podés iniciar sesión.');setTimeout(()=>location.replace('/iniciar-sesion'),1200)}
   catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(resetForm,false,'')}
 });
+addTagBtn?.addEventListener('click',()=>claimForm.classList.contains('hidden')?openAddTag():showClaim(false));
+cancelClaimBtn?.addEventListener('click',()=>{claimForm.reset();showClaim(false)});
 logoutBtn?.addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();if(error)return note('No se pudo cerrar la sesión. Intentá nuevamente.',true);sessionStorage.removeItem('trackmypetPendingTag');location.replace('/iniciar-sesion')});
 claimForm?.addEventListener('submit',async e=>{
   e.preventDefault();clearNote();busy(claimForm,true,'Verificando TAG…');const {data:{session}}=await supabase.auth.getSession();
