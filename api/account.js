@@ -70,6 +70,14 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch } = {}) {
     const allowed = (PUBLIC_FIELDS + ',' + PRIVATE_FIELDS).split(',');
     return { claimed_at: row.claimed_at, ...Object.fromEntries(allowed.map(key => [key, tag[key] ?? null])) };
   }
+  function photoPath(url, code) {
+    const prefix = config().url + '/storage/v1/object/public/pet-photos/';
+    if (typeof url !== 'string' || !url.startsWith(prefix)) return null;
+    let path;
+    try { path = decodeURIComponent(url.slice(prefix.length)); } catch { return null; }
+    if (!path.startsWith(code + '/') || /[?#\\]/.test(path) || path.includes('..') || path.split('/').length !== 2) return null;
+    return path;
+  }
   return async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.setHeader('CDN-Cache-Control', 'no-store');
@@ -118,10 +126,16 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch } = {}) {
       if (body.action === 'unlink') {
         if (!current) throw new AccountError(409, 'Este TAG ya no está vinculado a ninguna cuenta.');
         if (current.user_id !== user.id) throw new AccountError(403, 'No tenés permiso para desvincular este TAG.');
-        const removed = await db('/rest/v1/tag_owners?tag_id=eq.' + encodeURIComponent(tag.id) +
-          '&user_id=eq.' + encodeURIComponent(user.id) + '&select=tag_id', { method: 'DELETE' });
-        if (!removed?.length) throw new AccountError(409, 'El vínculo cambió. Actualizá la página e intentá nuevamente.');
-        return send(200, { data: { code: tag.codigo, unlinked: true } });
+        const reset = await db('/rest/v1/rpc/tmp_reset_tag', {
+          method: 'POST', body: { p_tag_id: tag.id, p_user_id: user.id }
+        });
+        const resetRow = reset?.[0];
+        if (!resetRow) throw new AccountError(409, 'El vínculo cambió. Actualizá la página e intentá nuevamente.');
+        for (const photo of [resetRow.foto1, resetRow.foto2, resetRow.foto3]) {
+          const path = photoPath(photo, tag.codigo);
+          if (path) await db('/storage/v1/object/pet-photos/' + path, { method: 'DELETE' });
+        }
+        return send(200, { data: { code: tag.codigo, reset: true } });
       }
       if (current?.user_id === user.id) return send(200, { data: { code: tag.codigo, active: tag.activo === true, alreadyLinked: true } });
       if (current) throw new AccountError(409, 'Este TAG ya está vinculado a otra cuenta.');
