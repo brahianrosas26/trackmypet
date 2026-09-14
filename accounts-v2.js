@@ -142,7 +142,7 @@ async function loadPets(session){
   if(!response.ok){note(json.error||'No se pudieron cargar tus mascotas.',true);return show('petsView')}
   const tags=json.data||[];
   petCount.textContent=tags.length===1?'1 TAG vinculado':tags.length+' TAGs vinculados';
-  els.petList.innerHTML=tags.length?tags.map(petCard).join(''):'<button class="empty-state" id="emptyAddTag" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h16M12 4v16"/></svg><strong>Aún no tenés TAGs vinculados</strong><p>Tocá acá para agregar tu primer TAG. Solo necesitás escanear su QR y tener el PIN a mano.</p></button>';
+  els.petList.innerHTML=tags.length?tags.map(petCard).join(''):'<button class="empty-state" id="emptyAddTag" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h16M12 4v16"/></svg><strong>Aún no tenés TAGs vinculados</strong><p>Tocá acá para agregar tu primer TAG. Tené el PIN a mano.</p></button>';
   $('emptyAddTag')?.addEventListener('click',openAddTag);
   const tag=pendingTag();
   if(tag){claimTitle.textContent='Activá tu TAG';claimIntro.textContent='Ingresá el PIN del TAG que acabás de escanear.';claimCode.value=tag;claimCodeWrap.classList.add('hidden');showClaim(true)}
