@@ -1,3 +1,5 @@
+import './account-controls.js';
+
 const path=location.pathname;
 const query=new URLSearchParams(location.search);
 const els=Object.fromEntries(['registerView','verifyView','loginView','recoverView','resetView','petsView','notice','accountEmail','petList'].map(id=>[id,document.getElementById(id)]));
@@ -14,6 +16,7 @@ function pendingTag(){
 }
 function destination(pathname){
   const tag=pendingTag();
+  claimCode.required=Boolean(tag);
   return pathname+(tag?'?tag='+encodeURIComponent(tag):'');
 }
 function show(id){for(const key of ['registerView','verifyView','loginView','recoverView','resetView','petsView'])els[key].classList.toggle('hidden',key!==id)}
@@ -221,9 +224,8 @@ claimForm?.addEventListener('submit',async e=>{
   try{const code=claimCode.value.trim(),response=await fetch('/api/account',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({action:'claim',code,pin:claimPin.value})}),json=await response.json();
     if(!response.ok)return note(json.error||'No se pudo vincular el TAG.',true);
     const tag=pendingTag();claimForm.reset();
-    if(tag===code){sessionStorage.removeItem('trackmypetPendingTag');location.replace('/'+encodeURIComponent(code)+'?account-activate=1');return}
+    if(tag===code){sessionStorage.removeItem('trackmypetPendingTag');location.replace('/'+encodeURIComponent(code)+'?'+(json.data.active?'account-edit':'account-activate')+'=1');return}
     note(json.data.alreadyLinked?'Este TAG ya estaba vinculado a tu cuenta.':'TAG vinculado correctamente.');await loadPets(session)
   }catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(claimForm,false,'')}
 });
 setup().catch(error=>note(error.message,true));
-
