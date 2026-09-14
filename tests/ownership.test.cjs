@@ -31,6 +31,11 @@ function fixture(options = {}) {
       if (options.duplicatePin) return new Response(JSON.stringify([tag,{...tag,id:'44444444-4444-4444-8444-444444444444',codigo:'000001'}]),{status:200});
       return new Response(JSON.stringify(body.p_pin===tag.pin?[{id:tag.id,codigo:tag.codigo,activo:tag.activo}]:[]),{status:200});
     }
+    if (u.pathname.endsWith('/rpc/tmp_reset_tag')) {
+      if (!state.owner || state.owner !== user.id || options.deleteConflict) return new Response(JSON.stringify([]),{status:200});
+      state.owner=null;
+      return new Response(JSON.stringify([{codigo:tag.codigo,foto1:null,foto2:null,foto3:null}]),{status:200});
+    }
     if (u.pathname === '/rest/v1/tags') return new Response(JSON.stringify(u.searchParams.get('codigo') === 'eq.000000' ? [tag] : []),{status:200});
     if (u.pathname === '/rest/v1/tag_owners' && init.method === 'GET') {
       if (u.searchParams.has('tag_id')) return new Response(JSON.stringify(state.owner ? [{user_id:state.owner}] : []),{status:200});
@@ -101,10 +106,10 @@ test('claim rejects wrong PIN, limiter denial and ownership conflicts', async()=
   f=fixture({conflict:true}); assert.equal((await f.request({action:'claim',code:'000000',pin:'0123'})).code,409);
 });
 
-test('only the current owner can unlink a TAG and the PIN is validated again', async()=>{
+test('only the current owner can remove a TAG and the PIN is validated again', async()=>{
   let f=fixture({owner:'22222222-2222-4222-8222-222222222222'});
   let result=await f.request({action:'unlink',code:'000000',pin:'0123'});
-  assert.equal(result.code,200); assert.equal(result.body.data.unlinked,true); assert.equal(f.state.owner,null);
+  assert.equal(result.code,200); assert.equal(result.body.data.reset,true); assert.equal(f.state.owner,null);
   assert.ok(!JSON.stringify(result.body).includes('0123'));
   f=fixture({owner:'22222222-2222-4222-8222-222222222222'});
   result=await f.request({action:'unlink',code:'000000',pin:'9999'});
@@ -136,5 +141,7 @@ test('ownership migrations deny browser roles and preserve data and photo reads'
   assert.match(release,/grant select, insert, delete.*service_role/is);
   assert.doesNotMatch(release,/grant[^\r\n]*\b(?:anon|authenticated)\b/i);
   assert.match(release,/revoke all on function public\.tmp_tag_by_pin\(text\) from public, anon, authenticated/is);
+  assert.match(release,/create or replace function public\.tmp_reset_tag\(p_tag_id uuid, p_user_id uuid\)/i);
+  assert.match(release,/revoke all on function public\.tmp_reset_tag\(uuid, uuid\) from public, anon, authenticated/is);
 });
 
