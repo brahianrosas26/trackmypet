@@ -353,6 +353,12 @@
 
     .lost-details strong { color: #3e2b00; }
 
+    .sighting-card { margin: 14px 0 4px; padding: 16px; border-radius: 18px; background: #edf8f1; border: 1px solid #b8dfc5; color: #28543a; }
+    .sighting-card p { margin: 0 0 12px; font-size: 14px; line-height: 1.45; }
+    .sighting-card .btn { width: 100%; }
+    .sighting-card .notice { display:none; margin:10px 0 0; padding:10px 12px; border-radius:12px; background:#fff; color:#28543a; font-size:13px; }
+    .sighting-card .notice.error { background:#fff0ee; color:#a83022; }
+
     h1 { font-size: 38px; line-height: 1; letter-spacing: -0.06em; margin-bottom: 8px; }
     h2 { font-size: 30px; line-height: 1; letter-spacing: -0.05em; margin-bottom: 10px; }
 
@@ -1000,6 +1006,12 @@
             <div id="lostMessageRow"><strong>Mensaje:</strong> <span id="profileLostMessage"></span></div>
           </div>
 
+          <div class="sighting-card" id="sightingCard" hidden>
+            <p>¿La viste? Si querés, compartí tu ubicación para ayudar a su familia a encontrarla.</p>
+            <button class="btn btn-primary" id="shareSighting" type="button">Compartir ubicación</button>
+            <div class="notice" id="sightingNotice" role="status" aria-live="polite"></div>
+          </div>
+
           <div class="actions">
             <a id="whatsappBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener">WhatsApp</a>
             <a id="callBtn" class="btn btn-dark" href="#">Llamar</a>
@@ -1257,6 +1269,9 @@ let activationPinVerified = false;
       profileLostZone: document.getElementById("profileLostZone"),
       lostMessageRow: document.getElementById("lostMessageRow"),
       profileLostMessage: document.getElementById("profileLostMessage"),
+      sightingCard: document.getElementById("sightingCard"),
+      shareSighting: document.getElementById("shareSighting"),
+      sightingNotice: document.getElementById("sightingNotice"),
       profileSex: document.getElementById("profileSex"),
       profileZone: document.getElementById("profileZone"),
       profileInfo: document.getElementById("profileInfo"),
@@ -1407,6 +1422,7 @@ function showLandingOrTag() {
         ? "Si me encontraste, por favor contactá a mi familia."
         : "Esta es mi ficha de identificación.";
       els.lostDetails.hidden = !isLost;
+      els.sightingCard.hidden = !isLost;
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
 
@@ -1430,6 +1446,25 @@ function showLandingOrTag() {
 
       showScreen("profile");
     }
+
+    async function submitSighting(position) {
+      const coords = position.coords;
+      const response = await fetch('/api/sighting', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+        code:tagCode, latitude:coords.latitude, longitude:coords.longitude, accuracy:coords.accuracy
+      }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'No pudimos guardar tu ubicación.');
+    }
+
+    els.shareSighting.addEventListener('click', () => {
+      const notice = els.sightingNotice;
+      if (!navigator.geolocation) { notice.textContent='Tu navegador no permite compartir ubicación.'; notice.className='notice error'; notice.style.display='block'; return; }
+      els.shareSighting.disabled=true; els.shareSighting.textContent='Solicitando ubicación…'; notice.style.display='none';
+      navigator.geolocation.getCurrentPosition(async position => {
+        try { await submitSighting(position); notice.textContent='Ubicación compartida. ¡Gracias por ayudar!'; notice.className='notice'; notice.style.display='block'; els.shareSighting.textContent='Ubicación compartida'; }
+        catch (error) { notice.textContent=error.message; notice.className='notice error'; notice.style.display='block'; els.shareSighting.disabled=false; els.shareSighting.textContent='Reintentar'; }
+      }, error => { notice.textContent=error.code===1?'No compartiste tu ubicación.':'No pudimos obtener tu ubicación.'; notice.className='notice error'; notice.style.display='block'; els.shareSighting.disabled=false; els.shareSighting.textContent='Compartir ubicación'; }, {enableHighAccuracy:false, timeout:12000, maximumAge:60000});
+    });
 
     function renderCarousel(petName) {
       if (!currentPhotos.length) {
@@ -1790,4 +1825,3 @@ renderActivationPhotoBoxes();
   </script>
 </body>
 </html>
-
