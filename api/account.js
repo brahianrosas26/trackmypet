@@ -70,6 +70,14 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch } = {}) {
     const allowed = (PUBLIC_FIELDS + ',' + PRIVATE_FIELDS).split(',');
     return { claimed_at: row.claimed_at, ...Object.fromEntries(allowed.map(key => [key, tag[key] ?? null])) };
   }
+  function photoPath(url, code) {
+    const prefix = config().url + '/storage/v1/object/public/pet-photos/';
+    if (typeof url !== 'string' || !url.startsWith(prefix)) return null;
+    let path;
+    try { path = decodeURIComponent(url.slice(prefix.length)); } catch { return null; }
+    if (!path.startsWith(code + '/') || /[?#\\]/.test(path) || path.includes('..') || path.split('/').length !== 2) return null;
+    return path;
+  }
   return async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     res.setHeader('CDN-Cache-Control', 'no-store');
@@ -90,30 +98,52 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch } = {}) {
         throw new AccountError(415, 'Formato no permitido.');
       }
       const body = await readBody(req);
-      if (body.action !== 'claim' || typeof body.code !== 'string' || !/^[0-9]{4,10}$/.test(body.code) ||
+      const validCode = typeof body.code === 'string' && /^[0-9]{4,10}$/.test(body.code);
+      const pinOnlyClaim = body.action === 'claim' && (body.code === '' || body.code == null);
+      if (!['claim', 'unlink'].includes(body.action) || (!validCode && !pinOnlyClaim) ||
           typeof body.pin !== 'string' || body.pin.length < 1 || body.pin.length > 128) {
         throw new AccountError(400, 'Revisá el código y el PIN ingresados.');
       }
+      const submittedPin = body.pin.trim();
       const ip = String(req.headers['x-vercel-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
       const allowance = await db('/rest/v1/rpc/tmp_pin_attempt', {
-        method: 'POST', body: { p_code: body.code, p_ip_hash: mac('ip:' + ip) }
+        method: 'POST', body: { p_code: validCode ? body.code : 'pin:' + mac('lookup:' + submittedPin), p_ip_hash: mac('ip:' + ip) }
       });
       if (!allowance?.allowed) {
         throw new AccountError(429, 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.', allowance?.retry_after || 900);
       }
-      const tags = await db('/rest/v1/tags?codigo=eq.' + encodeURIComponent(body.code) + '&select=id,codigo,pin&limit=1');
+      const tags = validCode
+        ? await db('/rest/v1/tags?codigo=eq.' + encodeURIComponent(body.code) + '&select=id,codigo,pin,activo&limit=1')
+        : await db('/rest/v1/rpc/tmp_tag_by_pin', { method: 'POST', body: { p_pin: submittedPin } });
+      if (!validCode && tags?.length > 1) {
+        throw new AccountError(409, 'Ese PIN corresponde a más de un TAG. Contactanos para vincularlo de forma segura.');
+      }
       const tag = tags?.[0];
-      if (!tag || !equal(mac('compare:' + body.pin.trim()), mac('compare:' + tag.pin))) {
-        throw new AccountError(401, 'Código o PIN incorrectos.');
+      if (!tag || (validCode && !equal(mac('compare:' + submittedPin), mac('compare:' + tag.pin)))) {
+        throw new AccountError(401, 'PIN incorrecto. Revisalo e intentá nuevamente.');
       }
       const current = await ownership(tag.id);
-      if (current?.user_id === user.id) return send(200, { data: { code: tag.codigo, alreadyLinked: true } });
+      if (body.action === 'unlink') {
+        if (!current) throw new AccountError(409, 'Este TAG ya no está vinculado a ninguna cuenta.');
+        if (current.user_id !== user.id) throw new AccountError(403, 'No tenés permiso para desvincular este TAG.');
+        const reset = await db('/rest/v1/rpc/tmp_reset_tag', {
+          method: 'POST', body: { p_tag_id: tag.id, p_user_id: user.id }
+        });
+        const resetRow = reset?.[0];
+        if (!resetRow) throw new AccountError(409, 'El vínculo cambió. Actualizá la página e intentá nuevamente.');
+        for (const photo of [resetRow.foto1, resetRow.foto2, resetRow.foto3]) {
+          const path = photoPath(photo, tag.codigo);
+          if (path) await db('/storage/v1/object/pet-photos/' + path, { method: 'DELETE' });
+        }
+        return send(200, { data: { code: tag.codigo, reset: true } });
+      }
+      if (current?.user_id === user.id) return send(200, { data: { code: tag.codigo, active: tag.activo === true, alreadyLinked: true } });
       if (current) throw new AccountError(409, 'Este TAG ya está vinculado a otra cuenta.');
       const inserted = await db('/rest/v1/tag_owners', {
         method: 'POST', body: { tag_id: tag.id, user_id: user.id }, allowConflict: true
       });
       if (inserted?.conflict) throw new AccountError(409, 'Este TAG ya está vinculado a otra cuenta.');
-      return send(201, { data: { code: tag.codigo, alreadyLinked: false } });
+      return send(201, { data: { code: tag.codigo, active: tag.activo === true, alreadyLinked: false } });
     } catch (error) {
       if (error.retryAfter) res.setHeader('Retry-After', String(error.retryAfter));
       const known = error instanceof AccountError || error instanceof OwnerAuthError;

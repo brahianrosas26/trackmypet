@@ -1029,6 +1029,7 @@ Identificación QR para mascotas.</p>
             <div class="field"><label for="editPin">PIN del TAG</label><input id="editPin" type="password" inputmode="numeric" placeholder="Ej: 8472" required /></div>
             <button class="btn btn-primary" type="submit">Entrar a editar</button>
           </form>
+          <a class="btn btn-soft" id="linkAccountFromPin" href="/iniciar-sesion">Vincular este TAG a mi cuenta</a>
         </div>
       </div>
     </section>
@@ -1292,8 +1293,11 @@ let activationPinVerified = false;
       lightboxDots: document.getElementById("lightboxDots"),
       lightboxStage: document.getElementById("lightboxStage"),
       backToProfileFromPin: document.getElementById("backToProfileFromPin"),
+      linkAccountFromPin: document.getElementById("linkAccountFromPin"),
       backToProfileFromEdit: document.getElementById("backToProfileFromEdit")
     };
+
+    els.linkAccountFromPin.href = '/iniciar-sesion?tag=' + encodeURIComponent(tagCode);
 
 function showLandingOrTag() {
   if (isTagPage) {
@@ -1786,5 +1790,4 @@ renderActivationPhotoBoxes();
   </script>
 </body>
 </html>
-
 
