@@ -3,7 +3,7 @@ const { OwnerAuthError, verifiedOwner } = require('./_lib/owner-auth');
 
 const BASE_FIELDS = 'codigo,activo,nombre,sexo,telefono,zona,info,foto1,foto2,foto3,updated_at';
 const LOST_FIELDS = 'perdida,zona_perdida,mensaje_perdida';
-const PUBLIC_FIELDS = BASE_FIELDS + ',' + LOST_FIELDS;
+const PUBLIC_FIELDS = BASE_FIELDS + ',' + LOST_FIELDS + ',info_medica';
 const OWNER_PROFILE_FIELDS = 'especie,raza,fecha_nacimiento,info_medica';
 const BUCKET = 'pet-photos';
 const MAX_IMAGE = 512 * 1024;
