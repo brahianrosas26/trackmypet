@@ -482,6 +482,9 @@
       border: 4px solid rgba(255,255,255,.98);
       box-shadow: 0 14px 34px rgba(29, 86, 56, .17), 0 2px 8px rgba(17,24,22,.08);
       overflow: hidden;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
       background: #e8f4ed;
       color: var(--green-dark);
       font-size: 36px;
@@ -1646,8 +1649,12 @@ function renderActivationPhotoBoxes() {
     }
 
     return `
-      <div class="photo-slot" data-index="${index}">
-        +
+      <div class="photo-slot" data-index="${index}" role="button" tabindex="0" aria-label="Agregar foto de la mascota">
+        <svg class="pet-placeholder-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 27c-4-5-3-10 1-12 4-2 8 1 10 6 2-5 6-8 10-6 4 2 5 7 1 12"/>
+          <path d="M18 39c1-8 7-13 14-13s13 5 14 13c1 7-4 12-14 12S17 46 18 39Z"/>
+          <path d="M32 30v9M27.5 34.5h9"/>
+        </svg>
       </div>
     `;
   }).join("");
