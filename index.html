@@ -1428,6 +1428,9 @@ function showLandingOrTag() {
         : "Esta es mi ficha de identificación.";
       els.lostDetails.hidden = !isLost;
       els.sightingHint.hidden = !isLost;
+      els.sightingAction.hidden = !isLost;
+      els.sightingAction.disabled = false;
+      els.sightingActionText.textContent = "Compartir mi ubicación";
       els.sightingHintText.textContent = isLost
         ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Si autorizás el acceso, se compartirá automáticamente con su propietario.`
         : "";
