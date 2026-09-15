@@ -50,7 +50,7 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
   }
   async function getTag(code, privateFields = false) {
     const selected = BASE_FIELDS + (lostStatusEnabled() ? ',' + LOST_FIELDS : '') +
-      (privateFields && ownerProfileEnabled() ? ',' + OWNER_PROFILE_FIELDS : '');
+      (ownerProfileEnabled() ? ',' + OWNER_PROFILE_FIELDS : '');
     const rows = await db('/rest/v1/tags?codigo=eq.' + encodeURIComponent(code) + '&select=' +
       (privateFields ? selected + ',id,pin' : selected) + '&limit=1');
     return rows?.[0] || null;
