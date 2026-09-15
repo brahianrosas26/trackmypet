@@ -984,12 +984,12 @@
               <div class="field field-full"><label for="petName">Nombre</label><input id="petName" type="text" placeholder="Ej: Luna" required /></div>
               <div class="field"><label for="petSpecies">Especie</label><input id="petSpecies" type="text" placeholder="Ej: Perro" /></div>
               <div class="field"><label for="petBreed">Raza</label><input id="petBreed" type="text" placeholder="Ej: Golden Retriever" /></div>
-              <div class="field"><label for="petSex">Sexo</label><select id="petSex" required><option value="">Seleccionar</option><option value="macho">Macho</option><option value="hembra">Hembra</option></select></div>
+              <div class="field"><label for="petSex">Sexo</label><select id="petSex"><option value="">Seleccionar</option><option value="macho">Macho</option><option value="hembra">Hembra</option></select></div>
               <div class="field"><label for="petBirthDate">Fecha de nacimiento</label><input id="petBirthDate" type="date" /></div>
-              <div class="field field-full"><label for="petInfo">Información</label><textarea id="petInfo" placeholder="Ej: Es nerviosa, no muerde, toma medicación..."></textarea></div>
-              <div class="field field-full medical-block"><label class="label-with-icon" for="petMedical"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/><path d="M3.7 12h4l1.5-3 3 7 1.6-4H20"/></svg>Información médica</label><textarea id="petMedical" placeholder="Ej: Es alérgica a ciertos alimentos (pollo y lácteos)."></textarea></div>
               <div class="field field-full"><label for="ownerPhone">Teléfono / WhatsApp</label><input id="ownerPhone" type="tel" placeholder="Ej: 099 123 456" required /></div>
-              <div class="field field-full"><label for="petZone">Zona o barrio</label><input id="petZone" type="text" placeholder="Ej: Prado, Montevideo" /></div>
+              <div class="field field-full"><label for="petZone">Zona o barrio</label><input id="petZone" type="text" placeholder="Ej: Prado, Montevideo" required /></div>
+              <div class="field field-full"><label for="petInfo">Información</label><textarea id="petInfo" placeholder="Ej: Es nerviosa, no muerde..."></textarea></div>
+              <div class="field field-full medical-block"><label class="label-with-icon" for="petMedical"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/><path d="M3.7 12h4l1.5-3 3 7 1.6-4H20"/></svg>Información médica</label><textarea id="petMedical" placeholder="Ej: Es alérgica a ciertos alimentos (pollo y lácteos)."></textarea></div>
             </div>
             <button class="btn btn-primary" type="submit">Guardar y activar TAG</button>
           </form>
@@ -1036,6 +1036,7 @@
             <div class="info-item"><strong>Sexo:</strong> <span id="profileSex">No especificado</span></div>
             <div class="info-item"><strong>Zona:</strong> <span id="profileZone">No especificada</span></div>
             <div class="info-item"><strong>Información:</strong> <span id="profileInfo">No hay información adicional.</span></div>
+            <div class="info-item" id="profileMedicalRow" hidden><strong>Información médica:</strong> <span id="profileMedical">No especificada.</span></div>
           </div>
         </div>
       </div>
@@ -1107,15 +1108,15 @@ Identificación QR para mascotas.</p>
                 </select>
               </div>
               <div class="field"><label for="editPetBirthDate">Fecha de nacimiento</label><input id="editPetBirthDate" type="date" /></div>
-              <div class="field field-full"><label for="editPetInfo">Información</label><textarea id="editPetInfo"></textarea></div>
+              <div class="field field-full"><label for="editOwnerPhone">Teléfono / WhatsApp</label><input id="editOwnerPhone" type="tel" placeholder="Ej: 099 123 456" required /></div>
+              <div class="field field-full"><label for="editPetZone">Zona o barrio</label><input id="editPetZone" type="text" placeholder="Ej: Prado, Montevideo" required /></div>
+              <div class="field field-full"><label for="editPetInfo">Información</label><textarea id="editPetInfo" placeholder="Ej: Es nerviosa, no muerde..."></textarea></div>
               <div class="field field-full medical-block">
                 <label class="label-with-icon" for="editPetMedical"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/><path d="M3.7 12h4l1.5-3 3 7 1.6-4H20"/></svg>Información médica</label>
                 <textarea id="editPetMedical" placeholder="Ej: Es alérgica a ciertos alimentos (pollo y lácteos)."></textarea>
               </div>
             </div>
 
-            <input id="editOwnerPhone" type="hidden" />
-            <input id="editPetZone" type="hidden" />
             <button class="btn btn-primary" type="submit">Guardar cambios</button>
           </form>
         </div>
