@@ -136,7 +136,8 @@ function petCard(tag){
   const photo=typeof tag.foto1==='string'&&/^https:\/\//.test(tag.foto1)?'<img class="pet-photo" src="'+escapeHtml(tag.foto1)+'" alt="Foto de '+name+'" loading="lazy"/>':'<div class="pet-placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 11.5c-1.4-1.1-2-2.7-1.3-3.6.7-.8 2.3-.5 3.6.7M15.5 11.5c1.4-1.1 2-2.7 1.3-3.6-.7-.8-2.3-.5-3.6.7"/><path d="M7.4 17.2c.8-2.7 2.4-4.2 4.6-4.2s3.8 1.5 4.6 4.2c.4 1.4-.7 2.8-2.2 2.8H9.6c-1.5 0-2.6-1.4-2.2-2.8Z"/></svg></div>';
   const status=tag.perdida?'<span class="badge lost">Está perdida</span>':tag.activo?'<span class="badge">Activo</span>':'<span class="badge pending">Pendiente</span>';
   const action=tag.activo?'Editar perfil':'Continuar activación';
-  return '<article class="pet">'+photo+'<div><h2>'+name+'</h2><div class="pet-meta"><span>Código '+code+'</span>'+status+'</div><div class="pet-actions"><a class="edit" href="/'+encodeURIComponent(tag.codigo)+'?'+(tag.activo?'account-edit':'account-activate')+'=1">'+action+'</a><a class="view" href="/'+encodeURIComponent(tag.codigo)+'">Ver ficha</a></div></div></article>';
+  const viewLink=tag.activo?'<a class="view" href="/'+encodeURIComponent(tag.codigo)+'">Ver ficha</a>':'';
+  return '<article class="pet">'+photo+'<div><h2>'+name+'</h2><div class="pet-meta"><span>Código '+code+'</span>'+status+'</div><div class="pet-actions"><a class="edit" href="/'+encodeURIComponent(tag.codigo)+'?'+(tag.activo?'account-edit':'account-activate')+'=1">'+action+'</a>'+viewLink+'</div></div></article>';
 }
 async function loadPets(session){
   const user=session.user;els.accountEmail.textContent=user.email;
