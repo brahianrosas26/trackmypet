@@ -118,7 +118,7 @@ async function setup(){
 }
 function showClaim(open=true){
   claimForm.classList.toggle('hidden',!open);
-  addTagBtn.setAttribute('aria-expanded',String(open));
+  addTagBtn?.setAttribute('aria-expanded',String(open));
   const emptyAddTag=$('emptyAddTag');
   if(emptyAddTag) emptyAddTag.hidden=open;
   if(open) setTimeout(()=>claimPin.focus(),0);
@@ -149,7 +149,6 @@ async function loadPets(session){
   const tags=json.data||[];
   petCount.textContent=tags.length===1?'1 TAG vinculado':tags.length+' TAGs vinculados';
   els.petList.innerHTML=tags.length?tags.map(petCard).join(''):'<button class="empty-state" id="emptyAddTag" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 12h16M12 4v16"/></svg><strong>Aún no tenés TAGs vinculados</strong><p>Tocá acá para agregar tu primer TAG. Tené el PIN a mano.</p></button>';
-  $('emptyAddTag')?.addEventListener('click',openAddTag);
   claimForm.reset();
   claimCodeWrap.classList.add('hidden');
   claimPin.closest('.field').classList.add('hidden');
@@ -220,7 +219,6 @@ resetForm?.addEventListener('submit',async e=>{
   if(error)return note(authMessage(error,'reset'),true);await supabase.auth.signOut();note('Contraseña actualizada. Ya podés iniciar sesión.');setTimeout(()=>location.replace('/iniciar-sesion'),1200)}
   catch{note('No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.',true)}finally{busy(resetForm,false,'')}
 });
-addTagBtn?.addEventListener('click',openAddTag);
 cancelClaimBtn?.addEventListener('click',()=>{claimForm.reset();showClaim(false)});
 logoutBtn?.addEventListener('click',async()=>{const {error}=await supabase.auth.signOut();if(error)return note('No se pudo cerrar la sesión. Intentá nuevamente.',true);sessionStorage.removeItem('trackmypetPendingTag');location.replace('/iniciar-sesion')});
 claimForm?.addEventListener('submit',async e=>{
