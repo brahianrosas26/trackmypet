@@ -56,7 +56,11 @@ test('sighting accepts only valid coordinates and writes no raw IP address', asy
   assert.match(rpc.body.p_ip_hash, /^[A-Za-z0-9_-]{43}$/);
   assert.notEqual(rpc.body.p_ip_hash, '192.0.2.1');
   const insert = f.state.calls.find(call => call.u.pathname === '/rest/v1/tag_sightings');
-  assert.deepEqual(insert.body, { tag_id: 'tag-1', latitude: -34.9011, longitude: -56.1645, accuracy_meters: 18 });
+  assert.equal(insert.body.tag_id, 'tag-1');
+  assert.equal(insert.body.latitude, -34.9011);
+  assert.equal(insert.body.longitude, -56.1645);
+  assert.equal(insert.body.accuracy_meters, 18);
+  assert.ok(insert.body.reported_at);
 });
 
 test('a sighting is rejected for a normal, inactive, or rate-limited TAG', async () => {
@@ -71,3 +75,4 @@ test('a sighting is rejected for a normal, inactive, or rate-limited TAG', async
     assert.ok(!f.state.calls.some(call => call.u.pathname === '/rest/v1/tag_sightings'));
   }
 });
+
