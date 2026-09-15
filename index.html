@@ -943,7 +943,7 @@
     .profile-normal .profile-identity .subtitle { display: none; }
     .profile-normal .profile-meta-public { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 13px; margin-top: 7px; color: #63726a; font-size: 15px; }
     .profile-normal .profile-meta-public > span { display: inline-flex; align-items: center; gap: 5px; }
-    .profile-normal .profile-meta-public > span + span::before { content: ""; width: 1px; height: 21px; background: #c9d8cf; margin-right: 6px; }
+    .profile-normal .profile-meta-public > span.meta-with-divider::before { content: ""; width: 1px; height: 21px; background: #c9d8cf; margin-right: 6px; }
     .profile-normal .profile-meta-public .ui-icon { width: 23px; height: 23px; color: var(--green); stroke: currentColor; fill: none; stroke-width: 2; }
     .profile-normal .actions { margin: 10px 0 18px; gap: 8px; }
     .profile-normal .actions .btn { min-height: 60px; border-radius: 17px; }
@@ -1508,10 +1508,17 @@ function showLandingOrTag() {
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
 
       const sexLabel = data.sexo === "hembra" ? "Hembra" : data.sexo === "macho" ? "Macho" : "";
-      els.profileSexInline.textContent = sexLabel;
-      els.profileSexMeta.hidden = !sexLabel;
-      els.profileSpecies.textContent = data.especie || "No especificada";
-      els.profileBreed.textContent = data.raza || "No especificada";
+      const profileMeta = [
+        [els.profileSpecies.parentElement, els.profileSpecies, data.especie],
+        [els.profileBreed.parentElement, els.profileBreed, data.raza],
+        [els.profileSexMeta, els.profileSexInline, sexLabel]
+      ];
+      let visibleMeta = 0;
+      for (const [item, text, value] of profileMeta) {
+        item.hidden = !value;
+        item.classList.toggle('meta-with-divider', Boolean(value) && visibleMeta++ > 0);
+        text.textContent = value || "";
+      }
       els.profileBirth.textContent = data.fecha_nacimiento ? new Date(data.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-UY') : "";
       els.profileBirthRow.hidden = !data.fecha_nacimiento;
       els.profileBody.classList.toggle('profile-normal', !isLost);
