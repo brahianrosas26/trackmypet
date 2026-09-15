@@ -1471,7 +1471,9 @@ function showLandingOrTag() {
         code:tagCode, latitude:coords.latitude, longitude:coords.longitude, accuracy:coords.accuracy
       }) });
       const payload = await response.json().catch(() => ({}));
+      if (response.status === 429) return { recentlyReceived: true, message: payload.error };
       if (!response.ok) throw new Error(payload.error || 'No pudimos guardar tu ubicación.');
+      return { recentlyReceived: false };
     }
 
     let automaticSightingAttempted = false;
@@ -1493,10 +1495,12 @@ function showLandingOrTag() {
       sightingSubmitting = true;
       setSightingActionState("loading");
       try {
-        await submitSighting(position);
+        const result = await submitSighting(position);
         sightingSent = true;
         setSightingActionState("sent");
-        setSightingFeedback("Gracias. La ubicación fue enviada al propietario.");
+        setSightingFeedback(result.recentlyReceived
+          ? "Esta ubicación ya había sido compartida recientemente. Gracias por ayudar."
+          : "Gracias. La ubicación fue enviada al propietario.");
       } catch (_) {
         setSightingActionState("idle");
         setSightingFeedback("No pudimos enviar la ubicación. Podés intentarlo nuevamente.");
