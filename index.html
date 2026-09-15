@@ -957,31 +957,30 @@
     </section>
 
     <section id="petSetupScreen" class="screen">
-      <div class="card">
+      <div class="card profile-editor-card">
         <div class="body">
-          <div class="mini-header"><button class="back-btn" id="backToActivation">← Volver</button></div>
-          <h2>Datos de tu mascota</h2>
-          <p class="subtitle">Completá la información que verá quien escanee el QR.</p>
+          <div class="mini-header"><button class="back-btn" id="backToActivation"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></svg>Volver</button></div>
+          <h2 class="profile-editor-title">Perfil de tu mascota</h2>
+          <p class="subtitle">Completá la información de tu mascota.</p>
 
           <div id="activationSuccess" class="success">TAG activado correctamente.</div>
 
           <form class="form" id="petSetupForm">
-            <div class="field"><label for="petName">Nombre de la mascota</label><input id="petName" type="text" placeholder="Ej: Luna" required /></div>
-            <div class="field">
-              <label for="petSex">Sexo</label>
-              <select id="petSex" required>
-                <option value="">Seleccionar</option>
-                <option value="macho">Macho</option>
-                <option value="hembra">Hembra</option>
-              </select>
-            </div>
-            <div class="field"><label for="ownerPhone">Teléfono / WhatsApp</label><input id="ownerPhone" type="tel" placeholder="Ej: 099 123 456" required /></div>
-            <div class="field"><label for="petZone">Zona o barrio</label><input id="petZone" type="text" placeholder="Ej: Prado, Montevideo" /></div>
-            <div class="field"><label for="petInfo">Información importante</label><textarea id="petInfo" placeholder="Ej: Es nerviosa, no muerde, toma medicación..."></textarea></div>
-            <div class="field">
-              <label>Foto actual de tu mascota</label>
+            <div class="profile-editor-photo">
               <div class="photo-editor-grid" id="activationPhotoBoxes"></div>
               <input id="petPhotos" type="file" accept="image/*" style="display:none" />
+              <span class="photo-camera-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="M14.5 5 13 3h-2L9.5 5H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3h-3.5Z"/><circle cx="12" cy="12" r="3.5"/></svg></span>
+            </div>
+            <div class="profile-form-grid">
+              <div class="field field-full"><label for="petName">Nombre</label><input id="petName" type="text" placeholder="Ej: Luna" required /></div>
+              <div class="field"><label for="petSpecies">Especie</label><input id="petSpecies" type="text" placeholder="Ej: Perro" /></div>
+              <div class="field"><label for="petBreed">Raza</label><input id="petBreed" type="text" placeholder="Ej: Golden Retriever" /></div>
+              <div class="field"><label for="petSex">Sexo</label><select id="petSex" required><option value="">Seleccionar</option><option value="macho">Macho</option><option value="hembra">Hembra</option></select></div>
+              <div class="field"><label for="petBirthDate">Fecha de nacimiento</label><input id="petBirthDate" type="date" /></div>
+              <div class="field field-full"><label for="petInfo">Información</label><textarea id="petInfo" placeholder="Ej: Es nerviosa, no muerde, toma medicación..."></textarea></div>
+              <div class="field field-full medical-block"><label class="label-with-icon" for="petMedical"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/><path d="M3.7 12h4l1.5-3 3 7 1.6-4H20"/></svg>Información médica</label><textarea id="petMedical" placeholder="Ej: Es alérgica a ciertos alimentos (pollo y lácteos)."></textarea></div>
+              <div class="field field-full"><label for="ownerPhone">Teléfono / WhatsApp</label><input id="ownerPhone" type="tel" placeholder="Ej: 099 123 456" required /></div>
+              <div class="field field-full"><label for="petZone">Zona o barrio</label><input id="petZone" type="text" placeholder="Ej: Prado, Montevideo" /></div>
             </div>
             <button class="btn btn-primary" type="submit">Guardar y activar TAG</button>
           </form>
@@ -1258,10 +1257,14 @@ let activationPinVerified = false;
       petSetupForm: document.getElementById("petSetupForm"),
       activationPin: document.getElementById("activationPin"),
       petName: document.getElementById("petName"),
+      petSpecies: document.getElementById("petSpecies"),
+      petBreed: document.getElementById("petBreed"),
       petSex: document.getElementById("petSex"),
+      petBirthDate: document.getElementById("petBirthDate"),
       ownerPhone: document.getElementById("ownerPhone"),
       petZone: document.getElementById("petZone"),
       petInfo: document.getElementById("petInfo"),
+      petMedical: document.getElementById("petMedical"),
       petPhotos: document.getElementById("petPhotos"),
       activationPhotoBoxes: document.getElementById("activationPhotoBoxes"),
       activationError: document.getElementById("activationError"),
@@ -1762,6 +1765,8 @@ renderEditPhotoBoxes();
       try {
         const photos = await uploadPhotos(activationPhotoFiles.filter(Boolean));
         await savePetData({ name: els.petName.value.trim(), sexo: els.petSex.value,
+          species: els.petSpecies.value.trim(), breed: els.petBreed.value.trim(),
+          birthDate: els.petBirthDate.value, medical: els.petMedical.value.trim(),
           phone: els.ownerPhone.value.trim(), zone: els.petZone.value.trim(), info: els.petInfo.value.trim(),
           perdida: false, lostZone: '', lostMessage: '', photos });
         activationPinVerified = false;
