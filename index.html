@@ -1770,6 +1770,10 @@ renderEditPhotoBoxes();
     });
 
     els.backToActivation.addEventListener('click', function() {
+      if (accountActivationRequested || accountEditRequested) {
+        window.location.replace('/mis-mascotas');
+        return;
+      }
       activationPinVerified = false;
       ownerSession = null;
       showScreen('activation');
@@ -1899,8 +1903,15 @@ els.profilePhoto.addEventListener("touchend", function(event) {
       }
     }, { passive: true });
 
-    els.backToProfileFromPin.addEventListener("click", renderProfile);
-    els.backToProfileFromEdit.addEventListener("click", renderProfile);
+    function goBackToAccountOrProfile() {
+      if (accountActivationRequested || accountEditRequested) {
+        window.location.replace('/mis-mascotas');
+        return;
+      }
+      renderProfile();
+    }
+    els.backToProfileFromPin.addEventListener("click", goBackToAccountOrProfile);
+    els.backToProfileFromEdit.addEventListener("click", goBackToAccountOrProfile);
 
 renderActivationPhotoBoxes();
     
