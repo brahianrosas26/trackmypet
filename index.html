@@ -1512,9 +1512,15 @@ function showLandingOrTag() {
         error => {
           sightingRequested = false;
           setSightingActionState("idle");
-          if (error && error.code !== 1) setSightingFeedback("No pudimos obtener la ubicación. Podés intentarlo nuevamente.");
+          if (error && error.code === 1) {
+            setSightingFeedback("Safari no permitió acceder a la ubicación. Abrí la configuración de este sitio en Safari, elegí Ubicación y seleccioná Preguntar o Permitir.");
+          } else if (error && error.code === 3) {
+            setSightingFeedback("La ubicación demoró demasiado. Verificá que la localización del teléfono esté activa e intentá nuevamente.");
+          } else {
+            setSightingFeedback("No pudimos obtener la ubicación. Verificá que la localización esté activa e intentá nuevamente.");
+          }
         },
-        { enableHighAccuracy:false, timeout:12000, maximumAge:60000 }
+        { enableHighAccuracy:true, timeout:20000, maximumAge:0 }
       );
     }
     els.sightingAction.addEventListener("click", requestSightingLocation);
