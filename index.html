@@ -723,11 +723,7 @@
       border: 1px solid rgba(255,255,255,0.18);
     }
 
-    .edit-btn::before {
-      content: "✎";
-      font-size: 22px;
-      line-height: 1;
-    }
+    .edit-btn .ui-icon { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; }
 
 .edit-btn:active {
   transform: scale(0.95);
@@ -956,6 +952,102 @@
     .profile-normal .info-item:has(#profileInfo), .profile-normal .info-item:has(#profileMedical) { grid-template-columns: 33px 1fr; align-items: start; }
     .profile-normal .info-item strong { font-size: 16px; }
     @media(max-width:420px){ .profile-normal .profile-meta-public{font-size:14px;gap:7px 10px}.profile-normal .profile-identity h1{font-size:31px}.profile-normal .info-item{grid-template-columns:30px 1fr auto;padding:13px}.profile-normal .info-item .ui-icon{width:25px;height:25px} }
+    /* Contenedor de ficha normal: composición única como la tarjeta de referencia. */
+    #profileScreen .card.profile-card-normal {
+      padding: 5px;
+      background: #fff;
+      border: 0;
+      border-radius: 34px;
+      box-shadow: 0 18px 44px rgba(29, 83, 58, .15);
+    }
+    #profileScreen .profile-card-normal .top {
+      min-height: 0;
+      aspect-ratio: 1.44 / 1;
+      border-radius: 29px;
+      background: #e9f2ec;
+    }
+    #profileScreen .profile-card-normal .carousel-photo {
+      height: 100%;
+      min-height: 0;
+      border-radius: 29px;
+    }
+    #profileScreen .profile-card-normal .body.profile-normal {
+      padding: 9px 13px 20px;
+    }
+    #profileScreen .profile-card-normal .profile-identity {
+      margin: 0;
+      padding: 13px 15px 14px;
+      border-radius: 19px;
+      background: linear-gradient(135deg, #f2fbf6, #edf8f2);
+    }
+    #profileScreen .profile-card-normal .profile-identity h1 {
+      font-size: clamp(34px, 9.3vw, 44px);
+      line-height: .98;
+    }
+    #profileScreen .profile-card-normal .profile-meta-public {
+      margin-top: 10px;
+      gap: 8px 13px;
+      font-size: 17px;
+    }
+    #profileScreen .profile-card-normal .profile-meta-public .ui-icon {
+      width: 28px;
+      height: 28px;
+      stroke-width: 2.25;
+    }
+    #profileScreen .profile-card-normal .actions {
+      margin: 9px 0 19px;
+      gap: 8px;
+    }
+    #profileScreen .profile-card-normal .actions .btn {
+      min-height: 62px;
+      padding: 12px 9px;
+      border-radius: 17px;
+      font-size: 17px;
+    }
+    #profileScreen .profile-card-normal .info-list {
+      gap: 10px;
+    }
+    #profileScreen .profile-card-normal .info-item {
+      min-height: 68px;
+      padding: 13px 16px;
+      border-radius: 18px;
+      background: #f3f8f5;
+      border-color: #e5efe9;
+      font-size: 16px;
+    }
+    #profileScreen .profile-card-normal .info-item strong {
+      font-size: 17px;
+    }
+    #profileScreen .profile-card-normal .info-item div span,
+    #profileScreen .profile-card-normal .info-item > span {
+      font-size: 16px;
+    }
+    #profileScreen .profile-card-normal .edit-btn {
+      top: 14px;
+      right: 14px;
+      height: 48px;
+      padding: 0 16px;
+      border-color: rgba(255,255,255,.54);
+      background: rgba(18, 28, 22, .32);
+      font-size: 16px;
+    }
+    #profileScreen .profile-card-normal .carousel-arrow,
+    #profileScreen .profile-card-normal .carousel-dots {
+      display: none;
+    }
+    @media(max-width:420px){
+      #profileScreen .card.profile-card-normal{border-radius:28px;padding:4px}
+      #profileScreen .profile-card-normal .top,
+      #profileScreen .profile-card-normal .carousel-photo{border-radius:24px}
+      #profileScreen .profile-card-normal .body.profile-normal{padding:8px 10px 16px}
+      #profileScreen .profile-card-normal .profile-identity{padding:12px 13px}
+      #profileScreen .profile-card-normal .profile-meta-public{font-size:15px;gap:7px 9px}
+      #profileScreen .profile-card-normal .profile-meta-public .ui-icon{width:24px;height:24px}
+      #profileScreen .profile-card-normal .info-item{padding:12px 13px;min-height:62px}
+      #profileScreen .profile-card-normal .info-item strong{font-size:16px}
+      #profileScreen .profile-card-normal .info-item div span,
+      #profileScreen .profile-card-normal .info-item > span{font-size:15px}
+    }
 </style>
 </head>
 
@@ -1026,7 +1118,7 @@
     <section id="profileScreen" class="screen">
       <div class="card">
         <div class="top">
-          <button class="edit-btn" id="openPinScreen" aria-label="Editar información"><span>Editar</span></button>
+          <button class="edit-btn" id="openPinScreen" aria-label="Editar información"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.8 5.2 4 4M4 20l4.5-1 9.8-9.8a2.8 2.8 0 0 0-4-4L4.5 15z"/></svg><span>Editar</span></button>
           <button class="carousel-arrow left" id="prevPhoto" type="button" aria-label="Foto anterior"><span>‹</span></button>
           <div class="pet-photo carousel-photo" id="profilePhoto">🐶</div>
           <button class="carousel-arrow right" id="nextPhoto" type="button" aria-label="Foto siguiente"><span>›</span></button>
@@ -1523,6 +1615,7 @@ function showLandingOrTag() {
       els.profileBirthRow.hidden = !data.fecha_nacimiento;
       els.profileBody.classList.toggle('profile-normal', !isLost);
       els.profileBody.classList.toggle('profile-lost', isLost);
+      els.profileBody.parentElement.classList.toggle('profile-card-normal', !isLost);
 
       els.profileName.textContent = data.nombre || "Mascota";
       els.profileZone.textContent = data.zona || "No especificada";
