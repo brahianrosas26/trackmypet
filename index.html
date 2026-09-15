@@ -1405,6 +1405,15 @@ function showLandingOrTag() {
 
       if (!data.activo) {
         if (accountActivationRequested) {
+          try {
+            await activateFromAccount();
+            return;
+          } catch (error) {
+            if (error.status !== 403) {
+              els.activationError.textContent = error.message;
+              els.activationError.style.display = 'block';
+            }
+          }
           els.activationAccountOptions.hidden = true;
           els.activationForm.hidden = false;
           els.activationError.style.display = 'none';
