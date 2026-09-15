@@ -237,7 +237,7 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch, now = Da
         const allowance = await db('/rest/v1/rpc/tmp_pin_attempt', { method: 'POST',
           body: { p_code: code, p_ip_hash: mac('ip:' + ip) } });
         // Límite temporalmente suspendido para pruebas; la validación real del PIN permanece activa.
-        if (false && !allowance?.allowed) throw new ApiError(429, 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.', allowance?.retry_after || 900);
+        if (!allowance?.allowed) throw new ApiError(429, 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.', allowance?.retry_after || 900);
         const tag = await getTag(code, true);
         if (!tag || !equal(mac('compare:' + body.pin.trim()), mac('compare:' + tag.pin))) throw new ApiError(401, 'PIN incorrecto o TAG inexistente.');
         if (await tagIsLinked(tag.id)) throw new ApiError(409, 'Este TAG se administra desde la cuenta de su propietario.');
