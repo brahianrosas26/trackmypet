@@ -10,6 +10,7 @@
     "api/tag.js": { "maxDuration": 30 },
     "api/account.js": { "maxDuration": 30 },
     "api/auth-config.js": { "maxDuration": 15 },
-    "api/lost-tags.js": { "maxDuration": 15 }
+    "api/lost-tags.js": { "maxDuration": 15 },
+    "api/sighting.js": { "maxDuration": 15 }
   }
 }
