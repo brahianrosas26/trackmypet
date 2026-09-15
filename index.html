@@ -360,6 +360,8 @@
     .sighting-action:active { transform:translateY(1px); }
     .sighting-action:disabled { cursor:default; opacity:.72; box-shadow:none; }
     .sighting-action svg { width:18px; height:18px; stroke:currentColor; flex:0 0 18px; }
+    .sighting-action:focus-visible { outline:3px solid rgba(47,143,91,.24); outline-offset:3px; }
+    .sighting-feedback { margin-top:8px; color:var(--muted); font-size:12px; line-height:1.4; text-align:center; }
 
     h1 { font-size: 38px; line-height: 1; letter-spacing: -0.06em; margin-bottom: 8px; }
     h2 { font-size: 30px; line-height: 1; letter-spacing: -0.05em; margin-bottom: 10px; }
@@ -1015,6 +1017,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.2"/></svg>
             <span id="sightingActionText">Compartir mi ubicación</span>
           </button>
+          <p class="sighting-feedback" id="sightingFeedback" role="status" aria-live="polite" hidden></p>
 
           <div class="actions">
             <a id="whatsappBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener">WhatsApp</a>
@@ -1277,6 +1280,7 @@ let activationPinVerified = false;
       sightingHintText: document.getElementById("sightingHintText"),
       sightingAction: document.getElementById("sightingAction"),
       sightingActionText: document.getElementById("sightingActionText"),
+      sightingFeedback: document.getElementById("sightingFeedback"),
       profileSex: document.getElementById("profileSex"),
       profileZone: document.getElementById("profileZone"),
       profileInfo: document.getElementById("profileInfo"),
@@ -1431,8 +1435,10 @@ function showLandingOrTag() {
       els.sightingAction.hidden = !isLost;
       els.sightingAction.disabled = false;
       els.sightingActionText.textContent = "Compartir mi ubicación";
+      els.sightingFeedback.hidden = true;
+      els.sightingFeedback.textContent = "";
       els.sightingHintText.textContent = isLost
-        ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Si autorizás el acceso, se compartirá automáticamente con su propietario.`
+        ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Tocá el botón y autorizá el acceso para compartirla con su propietario.`
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
@@ -1449,8 +1455,6 @@ function showLandingOrTag() {
       currentPhotos = [data.foto1, data.foto2, data.foto3].filter(Boolean);
       currentPhotoIndex = 0;
       renderCarousel(data.nombre || "mascota");
-
-      if (isLost) requestSightingLocation();
 
       const phone = normalizePhone(data.telefono || "");
       const message = encodeURIComponent("Hola, encontré a " + (data.nombre || "tu mascota") + ". Escaneé su TAG QR.");
@@ -1476,17 +1480,42 @@ function showLandingOrTag() {
       else if (state === "sent") { els.sightingAction.disabled = true; els.sightingActionText.textContent = "Ubicación compartida"; }
       else { els.sightingAction.disabled = false; els.sightingActionText.textContent = "Compartir mi ubicación"; }
     }
+    function setSightingFeedback(message) {
+      els.sightingFeedback.textContent = message;
+      els.sightingFeedback.hidden = !message;
+    }
     async function handleSightingPosition(position) {
       if (sightingSent) return;
       setSightingActionState("loading");
-      try { await submitSighting(position); sightingSent = true; setSightingActionState("sent"); }
-      catch (_) { setSightingActionState("idle"); }
+      try {
+        await submitSighting(position);
+        sightingSent = true;
+        setSightingActionState("sent");
+        setSightingFeedback("Gracias. La ubicación fue enviada al propietario.");
+      } catch (_) {
+        sightingRequested = false;
+        setSightingActionState("idle");
+        setSightingFeedback("No pudimos enviar la ubicación. Podés intentarlo nuevamente.");
+      }
     }
     function requestSightingLocation() {
-      if (sightingRequested || sightingSent || !navigator.geolocation) return;
+      if (sightingRequested || sightingSent) return;
+      setSightingFeedback("");
+      if (!navigator.geolocation) {
+        setSightingFeedback("Este navegador no permite compartir la ubicación.");
+        return;
+      }
       sightingRequested = true;
       setSightingActionState("loading");
-      navigator.geolocation.getCurrentPosition(handleSightingPosition, () => { sightingRequested = false; setSightingActionState("idle"); }, { enableHighAccuracy:false, timeout:12000, maximumAge:60000 });
+      navigator.geolocation.getCurrentPosition(
+        handleSightingPosition,
+        error => {
+          sightingRequested = false;
+          setSightingActionState("idle");
+          if (error && error.code !== 1) setSightingFeedback("No pudimos obtener la ubicación. Podés intentarlo nuevamente.");
+        },
+        { enableHighAccuracy:false, timeout:12000, maximumAge:60000 }
+      );
     }
     els.sightingAction.addEventListener("click", requestSightingLocation);
 
