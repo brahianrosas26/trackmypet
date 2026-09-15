@@ -17,6 +17,7 @@ function pendingTag(){
 function destination(pathname){
   const tag=pendingTag();
   claimCode.required=Boolean(tag);
+  if(tag && pathname==='/mis-mascotas') return '/'+encodeURIComponent(tag)+'?account-activate=1';
   return pathname+(tag?'?tag='+encodeURIComponent(tag):'');
 }
 function show(id){for(const key of ['registerView','verifyView','loginView','recoverView','resetView','petsView'])els[key].classList.toggle('hidden',key!==id)}
