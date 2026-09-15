@@ -1299,6 +1299,8 @@ let activationPinVerified = false;
       profileSex: document.getElementById("profileSex"),
       profileZone: document.getElementById("profileZone"),
       profileInfo: document.getElementById("profileInfo"),
+      profileMedicalRow: document.getElementById("profileMedicalRow"),
+      profileMedical: document.getElementById("profileMedical"),
       whatsappBtn: document.getElementById("whatsappBtn"),
       callBtn: document.getElementById("callBtn"),
       openPinScreen: document.getElementById("openPinScreen"),
@@ -1475,6 +1477,8 @@ function showLandingOrTag() {
       els.profileName.textContent = data.nombre || "Mascota";
       els.profileZone.textContent = data.zona || "No especificada";
       els.profileInfo.textContent = data.info || "No hay información adicional.";
+      els.profileMedical.textContent = data.info_medica || "No especificada.";
+      els.profileMedicalRow.hidden = !data.info_medica;
 
       currentPhotos = [data.foto1, data.foto2, data.foto3].filter(Boolean);
       currentPhotoIndex = 0;
