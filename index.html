@@ -1405,11 +1405,10 @@ function showLandingOrTag() {
 
       if (!data.activo) {
         if (accountActivationRequested) {
-          activateFromAccount().catch(error => {
-            els.activationError.textContent = error.message;
-            els.activationError.style.display = 'block';
-            showScreen('activation');
-          });
+          els.activationAccountOptions.hidden = true;
+          els.activationForm.hidden = false;
+          els.activationError.style.display = 'none';
+          showScreen('activation');
           return;
         }
         els.activationAccountOptions.hidden = false;
@@ -1745,10 +1744,29 @@ renderEditPhotoBoxes();
       els.activationError.style.display = 'none';
       els.activationForm.classList.add('loading');
       try {
-        await verifyPin(els.activationPin.value, 'activate');
-        els.activationPin.value = '';
-        activationPinVerified = true;
-        showScreen('petSetup');
+        if (accountActivationRequested) {
+          const cfgResponse = await fetch('/api/auth-config', { cache: 'no-store' });
+          const cfg = await cfgResponse.json();
+          if (!cfgResponse.ok) throw new Error(cfg.error || 'No se pudo iniciar la activación.');
+          const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');
+          const client = createClient(cfg.supabaseUrl, cfg.supabasePublishableKey);
+          const { data: { session } } = await client.auth.getSession();
+          if (!session) { window.location.replace('/iniciar-sesion?tag=' + encodeURIComponent(tagCode)); return; }
+          const response = await fetch('/api/account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+            body: JSON.stringify({ action: 'claim', code: tagCode, pin: els.activationPin.value.trim() })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'No se pudo vincular el TAG.');
+          els.activationPin.value = '';
+          await activateFromAccount();
+        } else {
+          await verifyPin(els.activationPin.value, 'activate');
+          els.activationPin.value = '';
+          activationPinVerified = true;
+          showScreen('petSetup');
+        }
       } catch (error) {
         activationPinVerified = false;
         els.activationError.textContent = error.message;
