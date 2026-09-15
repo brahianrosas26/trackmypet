@@ -5,7 +5,7 @@ const query=new URLSearchParams(location.search);
 const els=Object.fromEntries(['registerView','verifyView','loginView','recoverView','resetView','petsView','notice','accountEmail','petList'].map(id=>[id,document.getElementById(id)]));
 const $=id=>document.getElementById(id);
 const registerForm=$('registerForm'),registerEmail=$('registerEmail'),registerPassword=$('registerPassword'),registerPasswordConfirm=$('registerPasswordConfirm'),requestForm=$('requestForm'),verifyForm=$('verifyForm'),verifyEmail=$('verifyEmail'),verifyEmailText=$('verifyEmailText'),verifyCode=$('verifyCode'),resendBtn=$('resendBtn'),resendStatus=$('resendStatus'),loginForm=$('loginForm'),loginEmail=$('loginEmail'),loginPassword=$('loginPassword'),recoverRequestPanel=$('recoverRequestPanel'),recoverRequestForm=$('recoverRequestForm'),recoverEmail=$('recoverEmail'),recoverVerifyForm=$('recoverVerifyForm'),recoverVerifyEmail=$('recoverVerifyEmail'),recoverEmailText=$('recoverEmailText'),recoverCode=$('recoverCode'),recoverResendBtn=$('recoverResendBtn'),recoverResendStatus=$('recoverResendStatus'),resetForm=$('resetForm'),resetPassword=$('resetPassword'),resetPasswordConfirm=$('resetPasswordConfirm'),logoutBtn=$('logoutBtn'),addTagBtn=$('addTagBtn'),cancelClaimBtn=$('cancelClaimBtn'),petCount=$('petCount'),claimForm=$('claimForm'),claimTitle=$('claimTitle'),claimIntro=$('claimIntro'),claimCode=$('claimCode'),claimCodeWrap=$('claimCodeWrap'),claimPin=$('claimPin');
-const RESEND_DELAY=10*60*1000;
+const RESEND_DELAY=2*60*1000;
 let supabase,resendTimer,recoverResendTimer;
 
 function pendingTag(){
