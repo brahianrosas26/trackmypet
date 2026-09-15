@@ -1438,7 +1438,7 @@ function showLandingOrTag() {
       els.sightingFeedback.hidden = true;
       els.sightingFeedback.textContent = "";
       els.sightingHintText.textContent = isLost
-        ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Tocá el botón y autorizá el acceso para compartirla con su propietario.`
+        ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Si aceptás el permiso, se compartirá automáticamente; si no aparece, podés usar el botón.`
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
@@ -1462,6 +1462,7 @@ function showLandingOrTag() {
       els.callBtn.href = "tel:+" + phone;
 
       showScreen("profile");
+      if (isLost) requestSightingLocation({ automatic: true });
     }
 
     async function submitSighting(position) {
@@ -1473,7 +1474,10 @@ function showLandingOrTag() {
       if (!response.ok) throw new Error(payload.error || 'No pudimos guardar tu ubicación.');
     }
 
-    let sightingRequested = false;
+    let automaticSightingAttempted = false;
+    let automaticSightingInProgress = false;
+    let manualSightingInProgress = false;
+    let sightingSubmitting = false;
     let sightingSent = false;
     function setSightingActionState(state) {
       if (state === "loading") { els.sightingAction.disabled = true; els.sightingActionText.textContent = "Obteniendo ubicación…"; }
@@ -1485,7 +1489,8 @@ function showLandingOrTag() {
       els.sightingFeedback.hidden = !message;
     }
     async function handleSightingPosition(position) {
-      if (sightingSent) return;
+      if (sightingSent || sightingSubmitting) return;
+      sightingSubmitting = true;
       setSightingActionState("loading");
       try {
         await submitSighting(position);
@@ -1493,24 +1498,37 @@ function showLandingOrTag() {
         setSightingActionState("sent");
         setSightingFeedback("Gracias. La ubicación fue enviada al propietario.");
       } catch (_) {
-        sightingRequested = false;
         setSightingActionState("idle");
         setSightingFeedback("No pudimos enviar la ubicación. Podés intentarlo nuevamente.");
+      } finally {
+        sightingSubmitting = false;
       }
     }
-    function requestSightingLocation() {
-      if (sightingRequested || sightingSent) return;
-      setSightingFeedback("");
+    function requestSightingLocation(options) {
+      const automatic = options && options.automatic === true;
+      if (sightingSent || sightingSubmitting) return;
+      if (automatic) {
+        if (automaticSightingAttempted) return;
+        automaticSightingAttempted = true;
+        automaticSightingInProgress = true;
+      } else {
+        if (manualSightingInProgress) return;
+        manualSightingInProgress = true;
+        setSightingFeedback("");
+      }
       if (!navigator.geolocation) {
-        setSightingFeedback("Este navegador no permite compartir la ubicación.");
+        automaticSightingInProgress = false;
+        manualSightingInProgress = false;
+        if (!automatic) setSightingFeedback("Este navegador no permite compartir la ubicación.");
         return;
       }
-      sightingRequested = true;
-      setSightingActionState("loading");
+      if (!automatic) setSightingActionState("loading");
       navigator.geolocation.getCurrentPosition(
         handleSightingPosition,
         error => {
-          sightingRequested = false;
+          automaticSightingInProgress = false;
+          manualSightingInProgress = false;
+          if (automatic) return;
           setSightingActionState("idle");
           if (error && error.code === 1) {
             setSightingFeedback("Safari no permitió acceder a la ubicación. Abrí la configuración de este sitio en Safari, elegí Ubicación y seleccioná Preguntar o Permitir.");
@@ -1523,7 +1541,7 @@ function showLandingOrTag() {
         { enableHighAccuracy:true, timeout:20000, maximumAge:0 }
       );
     }
-    els.sightingAction.addEventListener("click", requestSightingLocation);
+    els.sightingAction.addEventListener("click", () => requestSightingLocation({ automatic: false }));
 
     function renderCarousel(petName) {
       if (!currentPhotos.length) {
