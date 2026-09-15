@@ -1008,10 +1008,17 @@
           <div class="carousel-dots" id="carouselDots"></div>
         </div>
 
-        <div class="body">
+        <div class="body" id="profileBody">
           <span class="status" id="profileStatus" hidden>Estoy perdido/a</span>
-          <h1 id="profileName">Mascota</h1>
-          <p class="subtitle" id="profileSubtitle">Ficha de identificación de la mascota.</p>
+          <div class="profile-identity">
+            <h1 id="profileName">Mascota</h1>
+            <p class="subtitle" id="profileSubtitle">Ficha de identificación de la mascota.</p>
+            <div class="profile-meta-public" id="profileMetaPublic">
+              <span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11.5c-1.4-1.1-2-2.7-1.3-3.6.7-.8 2.3-.5 3.6.7M15.5 11.5c1.4-1.1 2-2.7 1.3-3.6-.7-.8-2.3-.5-3.6.7"/><path d="M7.4 17.2c.8-2.7 2.4-4.2 4.6-4.2s3.8 1.5 4.6 4.2c.4 1.4-.7 2.8-2.2 2.8H9.6c-1.5 0-2.6-1.4-2.2-2.8Z"/></svg><span id="profileSpecies">No especificada</span></span>
+              <span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.5 6.5 8l3.5 2 4.5-5 2.2 5 4.3 1.2-1.8 6.3-3.5-1.2-2.8 3.2-4.2-1.7-3.4 1.4Z"/><path d="M7 10.5 5.8 7.8"/></svg><span id="profileBreed">No especificada</span></span>
+              <span id="profileSexMeta"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="5"/><path d="M14 14 20 20M17 17h3v3"/></svg><span id="profileSexInline">No especificado</span></span>
+            </div>
+          </div>
 
           <div class="lost-details" id="lostDetails" hidden>
             <div><strong>Zona donde se perdió:</strong> <span id="profileLostZone"></span></div>
@@ -1033,10 +1040,10 @@
           </div>
 
           <div class="info-list">
-            <div class="info-item"><strong>Sexo:</strong> <span id="profileSex">No especificado</span></div>
-            <div class="info-item"><strong>Zona:</strong> <span id="profileZone">No especificada</span></div>
-            <div class="info-item"><strong>Información:</strong> <span id="profileInfo">No hay información adicional.</span></div>
-            <div class="info-item" id="profileMedicalRow" hidden><strong>Información médica:</strong> <span id="profileMedical">No especificada.</span></div>
+            <div class="info-item" id="profileBirthRow" hidden><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01"/></svg><div><strong>Nacimiento</strong></div><span id="profileBirth"></span></div>
+            <div class="info-item"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.2"/></svg><div><strong>Zona</strong></div><span id="profileZone">No especificada</span></div>
+            <div class="info-item"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v5h5M8 13h8M8 17h6"/></svg><div><strong>Información</strong><span id="profileInfo">No hay información adicional.</span></div></div>
+            <div class="info-item" id="profileMedicalRow" hidden><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/><path d="M3.7 12h4l1.5-3 3 7 1.6-4H20"/></svg><div><strong>Información médica</strong><span id="profileMedical">No especificada.</span></div></div>
           </div>
         </div>
       </div>
