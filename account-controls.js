@@ -18,7 +18,7 @@ if (petList && notice) {
   dialog.className = 'owner-dialog';
   dialog.innerHTML = `<form class="owner-dialog-card" method="dialog">
     <h2>Eliminar TAG</h2>
-    <p>El TAG quedará libre para vincularlo a otra cuenta con su PIN. Los datos de la mascota se conservarán.</p>
+    <p>¿Estás seguro de eliminar este TAG? Se eliminarán todos los datos de la mascota.</p>
     <label>PIN del TAG<input id="removePin" type="password" inputmode="numeric" autocomplete="one-time-code" required></label>
     <div class="owner-dialog-actions"><button class="cancel-remove" value="cancel" type="button">Cancelar</button><button class="confirm-remove" type="submit">Eliminar TAG</button></div>
   </form>`;
@@ -71,7 +71,7 @@ if (petList && notice) {
       }, body: JSON.stringify({ action: 'unlink', code: selectedCode, pin: dialog.querySelector('#removePin').value }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'No se pudo eliminar el TAG.');
-      dialog.close(); showNotice('TAG eliminado. Ahora puede vincularse a otra cuenta usando su PIN.');
+      dialog.close(); showNotice('TAG eliminado. Todos los datos de la mascota fueron borrados y el TAG quedó libre.');
       setTimeout(() => location.reload(), 900);
     } catch (error) { showNotice(error.message || 'No pudimos conectarnos. Intentá nuevamente.', true); }
     finally { submit.disabled = false; submit.textContent = 'Eliminar TAG'; }
