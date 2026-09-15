@@ -989,6 +989,9 @@
       gap: 5px 9px;
       font-size: 15px;
     }
+    #profileScreen .profile-card-normal .profile-meta-public.meta-centered {
+      justify-content: center;
+    }
     #profileScreen .profile-card-normal .profile-meta-public .ui-icon {
       width: 28px;
       height: 28px;
@@ -1630,6 +1633,7 @@ function showLandingOrTag() {
         item.classList.toggle('meta-with-divider', Boolean(value) && visibleMeta++ > 0);
         text.textContent = value || "";
       }
+      els.profileMetaPublic.classList.toggle('meta-centered', visibleMeta > 1);
       els.profileBirth.textContent = data.fecha_nacimiento ? new Date(data.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-UY') : "";
       els.profileBirthRow.hidden = !data.fecha_nacimiento;
       els.profileBody.classList.toggle('profile-normal', !isLost);
