@@ -50,7 +50,7 @@ test('sighting accepts only valid coordinates and writes no raw IP address', asy
 
   const saved = await f.request(location);
   assert.equal(saved.code, 201);
-  assert.deepEqual(saved.body, { data: { saved: true } });
+  assert.deepEqual(saved.body, { data: { saved: true, ownerNotified: false } });
   const rpc = f.state.calls[0];
   assert.equal(rpc.u.pathname, '/rest/v1/rpc/tmp_sighting_attempt');
   assert.match(rpc.body.p_ip_hash, /^[A-Za-z0-9_-]{43}$/);
