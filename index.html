@@ -1473,7 +1473,7 @@ function showLandingOrTag() {
       const payload = await response.json().catch(() => ({}));
       if (response.status === 429) return { recentlyReceived: true, message: payload.error };
       if (!response.ok) throw new Error(payload.error || 'No pudimos guardar tu ubicación.');
-      return { recentlyReceived: false };
+      return { recentlyReceived: false, ownerNotified: payload.data?.ownerNotified === true };
     }
 
     let automaticSightingAttempted = false;
@@ -1500,7 +1500,9 @@ function showLandingOrTag() {
         setSightingActionState("sent");
         setSightingFeedback(result.recentlyReceived
           ? "Esta ubicación ya había sido compartida recientemente. Gracias por ayudar."
-          : "Gracias. La ubicación fue enviada al propietario.");
+          : result.ownerNotified
+            ? "Gracias. La ubicación fue enviada al propietario."
+            : "Gracias. La ubicación fue registrada correctamente.");
       } catch (_) {
         setSightingActionState("idle");
         setSightingFeedback("No pudimos enviar la ubicación. Podés intentarlo nuevamente.");
