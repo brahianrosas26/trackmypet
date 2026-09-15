@@ -1141,6 +1141,8 @@ Identificación QR para mascotas.</p>
     let saveMode = null;
     const accountActivationRequested = new URLSearchParams(window.location.search).get('account-activate') === '1';
     const accountEditRequested = new URLSearchParams(window.location.search).get('account-edit') === '1';
+    const ownerViewRequested = new URLSearchParams(window.location.search).get('owner-view') === '1';
+    const isOwnerView = accountActivationRequested || accountEditRequested || ownerViewRequested;
     let accountEditOpened = false;
 
     async function api(action, payload = {}) {
@@ -1430,9 +1432,10 @@ function showLandingOrTag() {
       els.profileSubtitle.textContent = isLost
         ? "Si me encontraste, por favor contactá a mi familia."
         : "Esta es mi ficha de identificación.";
+      const showSightingControls = isLost && !isOwnerView;
       els.lostDetails.hidden = !isLost;
-      els.sightingHint.hidden = !isLost;
-      els.sightingAction.hidden = !isLost;
+      els.sightingHint.hidden = !showSightingControls;
+      els.sightingAction.hidden = !showSightingControls;
       els.sightingAction.disabled = false;
       els.sightingActionText.textContent = "Compartir mi ubicación";
       els.sightingFeedback.hidden = true;
@@ -1462,7 +1465,7 @@ function showLandingOrTag() {
       els.callBtn.href = "tel:+" + phone;
 
       showScreen("profile");
-      if (isLost) requestSightingLocation({ automatic: true });
+      if (showSightingControls) requestSightingLocation({ automatic: true });
     }
 
     async function submitSighting(position) {
