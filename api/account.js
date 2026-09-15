@@ -110,7 +110,7 @@ function createHandler({ env = process.env, fetcher = globalThis.fetch } = {}) {
         method: 'POST', body: { p_code: validCode ? body.code : 'pin:' + mac('lookup:' + submittedPin), p_ip_hash: mac('ip:' + ip) }
       });
       // Límite temporalmente suspendido para pruebas; la validación real del PIN permanece activa.
-      if (false && !allowance?.allowed) {
+      if (!allowance?.allowed) {
         throw new AccountError(429, 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.', allowance?.retry_after || 900);
       }
       const tags = validCode
