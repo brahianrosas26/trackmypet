@@ -1153,8 +1153,8 @@
             <h1 id="profileName">Mascota</h1>
             <p class="subtitle" id="profileSubtitle">Ficha de identificación de la mascota.</p>
             <div class="profile-meta-public" id="profileMetaPublic">
-              <span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11.5c-1.4-1.1-2-2.7-1.3-3.6.7-.8 2.3-.5 3.6.7M15.5 11.5c1.4-1.1 2-2.7 1.3-3.6-.7-.8-2.3-.5-3.6.7"/><path d="M7.4 17.2c.8-2.7 2.4-4.2 4.6-4.2s3.8 1.5 4.6 4.2c.4 1.4-.7 2.8-2.2 2.8H9.6c-1.5 0-2.6-1.4-2.2-2.8Z"/></svg><span id="profileSpecies">No especificada</span></span>
-              <span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.5 6.5 8l3.5 2 4.5-5 2.2 5 4.3 1.2-1.8 6.3-3.5-1.2-2.8 3.2-4.2-1.7-3.4 1.4Z"/><path d="M7 10.5 5.8 7.8"/></svg><span id="profileBreed">No especificada</span></span>
+              <span><svg id="profileSpeciesIcon" class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11.5c-1.4-1.1-2-2.7-1.3-3.6.7-.8 2.3-.5 3.6.7M15.5 11.5c1.4-1.1 2-2.7 1.3-3.6-.7-.8-2.3-.5-3.6.7"/><path d="M7.4 17.2c.8-2.7 2.4-4.2 4.6-4.2s3.8 1.5 4.6 4.2c.4 1.4-.7 2.8-2.2 2.8H9.6c-1.5 0-2.6-1.4-2.2-2.8Z"/></svg><span id="profileSpecies"></span></span>
+              <span><svg id="profileBreedIcon" class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.5 6.5 8l3.5 2 4.5-5 2.2 5 4.3 1.2-1.8 6.3-3.5-1.2-2.8 3.2-4.2-1.7-3.4 1.4Z"/><path d="M7 10.5 5.8 7.8"/></svg><span id="profileBreed"></span></span>
               <span id="profileSexMeta"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="5"/><path d="M14 14 20 20M17 17h3v3"/></svg><span id="profileSexInline">No especificado</span></span>
             </div>
           </div>
@@ -1445,6 +1445,8 @@ let activationPinVerified = false;
       profileSexInline: document.getElementById("profileSexInline"),
       profileSexMeta: document.getElementById("profileSexMeta"),
       profileMetaPublic: document.getElementById("profileMetaPublic"),
+      profileSpeciesIcon: document.getElementById("profileSpeciesIcon"),
+      profileBreedIcon: document.getElementById("profileBreedIcon"),
       profileSpecies: document.getElementById("profileSpecies"),
       profileBreed: document.getElementById("profileBreed"),
       profileBirth: document.getElementById("profileBirth"),
@@ -1623,8 +1625,15 @@ function showLandingOrTag() {
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
 
       const sexLabel = data.sexo === "hembra" ? "Hembra" : data.sexo === "macho" ? "Macho" : "";
+      const speciesValue = String(data.especie || "").trim();
+      const speciesLower = speciesValue.toLowerCase();
+      const dogIcon = '<path d="M7.5 11.5c-1.7-.7-2.6-2.1-2.3-3.7.2-1.3 1.3-2.2 2.6-2.1l2.1.2 1.8-2.1c.6-.7 1.7-.7 2.3 0l1.8 2.1 2.1-.2c1.3-.1 2.4.8 2.6 2.1.3 1.6-.6 3-2.3 3.7v3.1c0 2.1-1.7 3.8-3.8 3.8h-3.1c-2.1 0-3.8-1.7-3.8-3.8v-3.1Z"/><path d="M9 12.5h.01M15 12.5h.01M10.5 16c1 .8 2 .8 3 0"/>';
+      const catIcon = '<path d="m5 10 1-4 3 2c2-.9 4-.9 6 0l3-2 1 4v4.2c0 2.1-1.7 3.8-3.8 3.8H8.8A3.8 3.8 0 0 1 5 14.2V10Z"/><path d="M9 13h.01M15 13h.01M10.5 16c1 .8 2 .8 3 0"/>';
+      const pawIcon = '<path d="M8.2 11.5c-1.2-1.2-2.8-1.5-3.8-.5s-.7 2.6.5 3.8c.9.9 2.1 1.1 3.1.6.6-.3 1.4-.3 2 0 1 .5 2.2.3 3.1-.6 1.2-1.2 1.5-2.8.5-3.8s-2.6-.7-3.8.5c-.5.5-1.1.5-1.6 0Z"/><path d="M7 7.5c-.7-1.2-.4-2.5.6-3s2.2.1 2.9 1.3c.5.9.4 1.8-.2 2.4M17 7.5c.7-1.2.4-2.5-.6-3s-2.2.1-2.9 1.3c-.5.9-.4 1.8.2 2.4"/>';
+      els.profileSpeciesIcon.innerHTML = speciesLower.includes("perr") ? dogIcon : speciesLower.includes("gat") ? catIcon : pawIcon;
+      els.profileBreedIcon.innerHTML = pawIcon;
       const profileMeta = [
-        [els.profileSpecies.parentElement, els.profileSpecies, data.especie],
+        [els.profileSpecies.parentElement, els.profileSpecies, speciesValue],
         [els.profileBreed.parentElement, els.profileBreed, data.raza],
         [els.profileSexMeta, els.profileSexInline, sexLabel]
       ];
