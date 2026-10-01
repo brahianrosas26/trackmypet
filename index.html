@@ -712,7 +712,7 @@
       color: white;
       font-size: 12px;
       cursor: pointer;
-      backdrop-filter: blur(14px);
+      backdrop-filter: blur(10px);
       z-index: 4;
       display: inline-flex;
       align-items: center;
@@ -1250,16 +1250,16 @@
       content: "";
       position: absolute;
       z-index: -1;
-      inset: -13px -16px;
+      inset: -6px -9px;
       border-radius: 999px;
       background: radial-gradient(ellipse at center, rgba(220, 45, 65, .98) 0%, rgba(225, 48, 68, .96) 58%, rgba(229, 55, 73, .82) 78%, rgba(229, 55, 73, 0) 100%);
       filter: blur(14px);
-      opacity: .9;
+      opacity: .86;
       animation: lost-status-only-light 2.3s ease-in-out infinite;
     }
     @keyframes lost-status-only-light {
-      0%, 100% { transform: scale(.9); opacity: .54; }
-      50% { transform: scale(1.18); opacity: .9; }
+      0%, 100% { transform: scale(.94); opacity: .62; }
+      50% { transform: scale(1.08); opacity: .86; }
     }
     @media (prefers-reduced-motion: reduce) {
       #profileScreen .profile-card-lost #profileStatus::after { animation: none; }
