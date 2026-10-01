@@ -1221,54 +1221,48 @@
     }
 
 
-    /* Etiqueta de pérdida sobre la foto, con halo luminoso sutil. */
+    /* Señal completa de pérdida: el texto y el fondo forman una sola luz pulsante. */
     #profileScreen .profile-card-lost .top { position: relative; }
     #profileScreen .profile-card-lost #profileStatus {
       position: absolute;
       z-index: 5;
-      top: 14px;
-      left: 14px;
+      top: 15px;
+      left: 15px;
       display: inline-flex;
       align-items: center;
       min-height: 30px;
       margin: 0;
-      padding: 7px 11px;
+      padding: 6px 10px;
       border: 0;
       border-radius: 999px;
-      background: linear-gradient(90deg, rgba(191, 42, 59, .96) 0%, rgba(210, 55, 70, .91) 58%, rgba(231, 79, 93, .62) 100%);
-      box-shadow: 0 0 0 3px rgba(234, 80, 93, .14), 0 0 30px 13px rgba(222, 57, 73, .52);
+      background: radial-gradient(ellipse at 50% 45%, #ff9aa4 0%, #f14e61 46%, #c92f42 100%);
+      box-shadow: 0 0 15px 5px rgba(255, 102, 117, .86), 0 0 32px 13px rgba(219, 50, 69, .56);
       color: #fff;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 850;
       line-height: 1;
-      text-shadow: 0 1px 2px rgba(82, 13, 21, .24);
+      letter-spacing: .01em;
+      text-shadow: 0 0 7px rgba(255,255,255,.96), 0 1px 2px rgba(104, 15, 27, .4);
       pointer-events: none;
-      animation: lost-status-glow 2.4s ease-in-out infinite;
+      animation: lost-status-full-light 2.3s ease-in-out infinite;
     }
-    #profileScreen .profile-card-lost #profileStatus::after {
-      content: "";
-      position: absolute;
-      z-index: -1;
-      inset: -10px -14px;
-      border-radius: 999px;
-      background: rgba(241, 68, 85, .68);
-      filter: blur(14px);
-      opacity: .62;
-      animation: lost-status-diffuse 2.4s ease-in-out infinite;
-    }
-    @keyframes lost-status-diffuse {
-      0%, 100% { transform: scale(.92); opacity: .48; }
-      50% { transform: scale(1.10); opacity: .76; }
-    }
-    @keyframes lost-status-glow {
-      0%, 100% { box-shadow: 0 0 0 4px rgba(234, 80, 93, .20), 0 0 28px 11px rgba(222, 57, 73, .50); }
-      50% { box-shadow: 0 0 0 7px rgba(255, 114, 127, .22), 0 0 37px 15px rgba(239, 65, 82, .70); }
+    @keyframes lost-status-full-light {
+      0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: 0 0 15px 5px rgba(255, 102, 117, .86), 0 0 32px 13px rgba(219, 50, 69, .56);
+      }
+      50% {
+        transform: scale(1.045);
+        filter: brightness(1.18);
+        box-shadow: 0 0 20px 8px rgba(255, 132, 143, .98), 0 0 40px 18px rgba(234, 52, 74, .72);
+      }
     }
     @media (prefers-reduced-motion: reduce) {
-      #profileScreen .profile-card-lost #profileStatus, #profileScreen .profile-card-lost #profileStatus::after { animation: none; }
+      #profileScreen .profile-card-lost #profileStatus { animation: none; }
     }
     @media(max-width:420px) {
-      #profileScreen .profile-card-lost #profileStatus { top: 12px; left: 12px; }
+      #profileScreen .profile-card-lost #profileStatus { top: 13px; left: 13px; }
     }
 
 </style>
