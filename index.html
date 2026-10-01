@@ -1221,38 +1221,51 @@
     }
 
 
-    /* Aviso de pérdida sobre la foto: visible, pero sin ocultar el contenido. */
+    /* Señal luminosa de pérdida: flota sobre la foto sin aspecto de botón. */
     #profileScreen .profile-card-lost .top { position: relative; }
     #profileScreen .profile-card-lost #profileStatus {
       position: absolute;
       z-index: 5;
-      top: 14px;
-      left: 14px;
+      top: 18px;
+      left: 18px;
       display: inline-flex;
       align-items: center;
-      min-height: 34px;
+      gap: 8px;
+      min-height: 28px;
       margin: 0;
-      padding: 7px 11px;
-      border: 1px solid rgba(255,255,255,.7);
-      border-radius: 999px;
-      background: rgba(201, 55, 70, .93);
-      box-shadow: 0 4px 14px rgba(132, 27, 39, .25);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
       color: #fff;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 850;
       line-height: 1;
+      letter-spacing: .01em;
+      text-shadow: 0 1px 7px rgba(77, 10, 18, .9), 0 0 18px rgba(224, 68, 82, .9);
       pointer-events: none;
-      animation: lost-status-pulse 2.5s ease-in-out infinite;
     }
-    @keyframes lost-status-pulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 4px 14px rgba(132, 27, 39, .25); }
-      50% { transform: scale(1.035); box-shadow: 0 6px 20px rgba(201, 55, 70, .4); }
+    #profileScreen .profile-card-lost #profileStatus::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      flex: 0 0 10px;
+      border-radius: 50%;
+      background: #ff6373;
+      border: 2px solid rgba(255,255,255,.92);
+      box-shadow: 0 0 0 4px rgba(255, 93, 110, .22), 0 0 17px 5px rgba(244, 57, 75, .65);
+      animation: lost-status-light 2.2s ease-in-out infinite;
+    }
+    @keyframes lost-status-light {
+      0%, 100% { transform: scale(1); opacity: .92; box-shadow: 0 0 0 4px rgba(255, 93, 110, .22), 0 0 17px 5px rgba(244, 57, 75, .65); }
+      50% { transform: scale(1.12); opacity: 1; box-shadow: 0 0 0 8px rgba(255, 93, 110, .12), 0 0 24px 8px rgba(244, 57, 75, .82); }
     }
     @media (prefers-reduced-motion: reduce) {
-      #profileScreen .profile-card-lost #profileStatus { animation: none; }
+      #profileScreen .profile-card-lost #profileStatus::before { animation: none; }
     }
     @media(max-width:420px) {
-      #profileScreen .profile-card-lost #profileStatus { top: 12px; left: 12px; }
+      #profileScreen .profile-card-lost #profileStatus { top: 15px; left: 15px; }
     }
 
 </style>
