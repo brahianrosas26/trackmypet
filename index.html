@@ -1174,7 +1174,7 @@
           <p class="sighting-feedback" id="sightingFeedback" role="status" aria-live="polite" hidden></p>
 
           <div class="actions">
-            <a id="whatsappBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener"><svg class="action-icon whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.5L3.5 20.5l1.3-4.2A8.5 8.5 0 1 1 20.5 11.7Z"/><path d="M8.1 8.2c.2-.5.5-.5.8-.5h.6c.2 0 .4.1.5.4l.7 1.7c.1.2.1.4 0 .6l-.4.6c-.1.2 0 .4.1.6.4.7 1 1.3 1.7 1.7.2.1.4.2.6.1l.6-.4c.2-.1.4-.1.6 0l1.7.7c.3.1.4.3.4.5v.5c0 .4-.3.7-.7.8-.7.2-2.2.2-4.4-.8-1.8-.8-3.2-2.2-4-4-.8-1.8-.9-3.3-.7-4.1Z"/></svg><span>WhatsApp</span></a>
+            <a id="whatsappBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener"><svg class="action-icon whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.6a9 9 0 0 1-13.3 7.9L3 21l1.5-4.6A9 9 0 1 1 21 11.6Z"/><path d="M8.2 6.7c-.6 0-1.4.9-1.4 1.9 0 2.7 3.8 6.8 6.9 7.3 1.3.2 2.7-.5 2.9-1.5l.1-.8-2.5-1.2-.9 1.1c-.2.3-.5.3-.8.2-1.5-.6-2.7-1.8-3.3-3.2-.1-.3-.1-.6.1-.8l.9-1-1.2-2Z" fill="currentColor" stroke="none"/></svg><span>WhatsApp</span></a>
             <a id="callBtn" class="btn btn-dark" href="#"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg><span>Llamar</span></a>
           </div>
 
@@ -1626,12 +1626,12 @@ function showLandingOrTag() {
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
 
       const sexLabel = data.sexo === "hembra" ? "Hembra" : data.sexo === "macho" ? "Macho" : "";
-      const maleIcon = '<circle cx="10" cy="14" r="5"/><path d="m13.5 10.5 5-5M15 5.5h4v4"/>';
-      const femaleIcon = '<circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/>';
+      const maleIcon = '<g stroke-width="2.8"><circle cx="9.5" cy="14.5" r="5.5"/><path d="m13.4 10.6 6.1-6.1M14.5 4.5h5v5"/></g>';
+      const femaleIcon = '<g stroke-width="2.8"><circle cx="12" cy="8" r="5.5"/><path d="M12 13.5v8M8.7 18.2h6.6"/></g>';
       if (sexLabel) els.profileSexIcon.innerHTML = data.sexo === "macho" ? maleIcon : femaleIcon;
       const speciesValue = String(data.especie || "").trim();
       const speciesLower = speciesValue.toLowerCase();
-      const dogIcon = '<path d="M7.2 8.2C6 6.4 3.5 6.6 3 8.8c-.6 2.7.7 6.1 4 7.2"/><path d="M16.8 8.2c1.2-1.8 3.7-1.6 4.2.6.6 2.7-.7 6.1-4 7.2"/><path d="M7 8c1.2-2 2.8-3 5-3s3.8 1 5 3v7.2c0 3-2.2 5.3-5 5.3s-5-2.3-5-5.3Z"/><path d="M9.2 12h.01M14.8 12h.01"/><path d="M10 15c.5-.7 1.2-1 2-1s1.5.3 2 1c-.4 1-1.1 1.5-2 1.5S10.4 16 10 15Z"/><path d="M12 16.5v1M9.8 18c.7.7 1.4 1 2.2 1s1.5-.3 2.2-1"/>';
+      const dogIcon = '<path d="M7.1 5.3 5.2 4.8a1.6 1.6 0 0 0-1.7.5L1.8 7.1a1.6 1.6 0 0 0-.2 2l3.1 4.2"/><path d="m16.9 5.3 1.9-.5a1.6 1.6 0 0 1 1.7.5l1.7 1.8a1.6 1.6 0 0 1 .2 2l-3.1 4.2"/><path d="M5 12.8c0-5.2 2.6-8.5 7-8.5s7 3.3 7 8.5v1.8c0 3.8-2.7 6.2-7 6.2s-7-2.4-7-6.2Z"/><circle cx="9" cy="11.6" r=".85" fill="currentColor" stroke="none"/><circle cx="15" cy="11.6" r=".85" fill="currentColor" stroke="none"/><path d="M10 14.8q2-.7 4 0c0 1.1-.8 1.8-2 1.8s-2-.7-2-1.8Z" fill="currentColor" stroke="none"/><path d="M12 16.6v.7m-2.2.6q1.1 1 2.2-.2 1.1 1.2 2.2.2"/>';
       const catIcon = '<path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0 1 12 5Z"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75Z"/>';
       const pawIcon = '<circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>';
       els.profileSpeciesIcon.innerHTML = speciesLower.includes("perr") ? dogIcon : speciesLower.includes("gat") ? catIcon : pawIcon;
