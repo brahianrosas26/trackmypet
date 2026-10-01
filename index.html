@@ -1071,6 +1071,155 @@
       #profileScreen .profile-card-normal .info-item div span,
       #profileScreen .profile-card-normal .info-item > span{font-size:15px}
     }
+
+    /* La ficha perdida conserva la misma tarjeta base de la ficha normal. */
+    #profileScreen .profile-card-normal .body.profile-lost {
+      padding: 7px 11px 12px;
+    }
+    #profileScreen .profile-card-normal .body.profile-lost .profile-identity {
+      margin: 0;
+      padding: 9px 13px 10px;
+      border-radius: 19px;
+      background: linear-gradient(135deg, #f2fbf6, #edf8f2);
+    }
+    #profileScreen .profile-card-normal .profile-lost .profile-identity h1 {
+      margin: 0;
+      font-size: clamp(30px, 8.3vw, 37px);
+      line-height: .98;
+      letter-spacing: -.05em;
+    }
+    #profileScreen .profile-card-normal .profile-lost .profile-identity .subtitle { display: none; }
+    #profileScreen .profile-card-normal .profile-lost .profile-meta-public {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px 9px;
+      margin-top: 5px;
+      color: #63726a;
+      font-size: 15px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .profile-meta-public > span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .profile-meta-public > span.meta-with-divider::before {
+      content: "";
+      width: 1px;
+      height: 21px;
+      background: #c9d8cf;
+      margin-right: 6px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .profile-meta-public .ui-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--green);
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.5;
+    }
+    #profileScreen .profile-card-normal .profile-lost .status {
+      display: inline-flex;
+      align-items: center;
+      margin: 2px 0 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: #fff0f1;
+      border: 1px solid #ffd3d7;
+      color: #c93746;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    #profileScreen .profile-card-normal .profile-lost .lost-details {
+      gap: 7px;
+      margin: 8px 0 2px;
+      padding: 11px 13px;
+      border-radius: 18px;
+      background: #fff4f5;
+      border-color: #ffd4d9;
+      color: #80323b;
+      font-size: 14px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .lost-details strong { color: #b52f3e; }
+    #profileScreen .profile-card-normal .profile-lost .lost-location-hint {
+      margin: 8px 0 2px;
+      padding: 10px 12px;
+      border-radius: 16px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .sighting-action {
+      margin-top: 8px;
+      min-height: 50px;
+      border-radius: 17px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      margin: 8px 0 10px;
+      gap: 6px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .actions .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 52px;
+      padding: 8px 7px;
+      border-radius: 17px;
+      font-size: 17px;
+      font-weight: 850;
+    }
+    #profileScreen .profile-card-normal .profile-lost .action-icon {
+      width: 27px;
+      height: 27px;
+      flex: 0 0 27px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #profileScreen .profile-card-normal .profile-lost .info-list { gap: 7px; margin-top: 0; }
+    #profileScreen .profile-card-normal .profile-lost .info-item {
+      min-height: 54px;
+      padding: 8px 13px;
+      border-radius: 18px;
+      background: #f3f8f5;
+      border-color: #e5efe9;
+      font-size: 16px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .info-item .ui-icon {
+      width: 28px;
+      height: 28px;
+      color: var(--green);
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    #profileScreen .profile-card-normal .profile-lost .info-item strong { font-size: 15px; }
+    #profileScreen .profile-card-normal .profile-lost .info-item div span,
+    #profileScreen .profile-card-normal .profile-lost .info-item > span { font-size: 14px; }
+    #profileScreen .profile-card-normal .profile-lost .edit-btn {
+      top: 14px;
+      right: 14px;
+      height: 48px;
+      padding: 0 16px;
+      border-color: rgba(255,255,255,.54);
+      background: rgba(18, 28, 22, .32);
+      font-size: 16px;
+    }
+    #profileScreen .profile-card-normal .profile-lost .carousel-arrow,
+    #profileScreen .profile-card-normal .profile-lost .carousel-dots { display: none; }
+    @media(max-width:420px) {
+      #profileScreen .profile-card-normal .body.profile-lost { padding: 8px 10px 16px; }
+      #profileScreen .profile-card-normal .profile-lost .profile-identity { padding: 12px 13px; }
+      #profileScreen .profile-card-normal .profile-lost .profile-meta-public { font-size: 15px; gap: 7px 9px; }
+      #profileScreen .profile-card-normal .profile-lost .profile-meta-public .ui-icon { width: 24px; height: 24px; }
+      #profileScreen .profile-card-normal .profile-lost .info-item { padding: 12px 13px; min-height: 62px; }
+      #profileScreen .profile-card-normal .profile-lost .info-item strong { font-size: 16px; }
+      #profileScreen .profile-card-normal .profile-lost .info-item div span,
+      #profileScreen .profile-card-normal .profile-lost .info-item > span { font-size: 15px; }
+    }
+
 </style>
 </head>
 
@@ -1653,7 +1802,7 @@ function showLandingOrTag() {
       els.profileBirthRow.hidden = !data.fecha_nacimiento;
       els.profileBody.classList.toggle('profile-normal', !isLost);
       els.profileBody.classList.toggle('profile-lost', isLost);
-      els.profileBody.parentElement.classList.toggle('profile-card-normal', !isLost);
+      els.profileBody.parentElement.classList.add('profile-card-normal');
 
       els.profileName.textContent = data.nombre || "Mascota";
       els.profileZone.textContent = data.zona || "No especificada";
