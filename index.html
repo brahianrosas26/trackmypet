@@ -1243,6 +1243,7 @@
       line-height: 1;
       letter-spacing: .01em;
       text-shadow: 0 1px 5px rgba(55, 7, 14, .92);
+      isolation: isolate;
       pointer-events: none;
       animation: none;
     }
@@ -1252,8 +1253,10 @@
       z-index: -1;
       inset: -3px -5px;
       border-radius: 999px;
-      background: radial-gradient(ellipse at center, #c9263b 0%, #c9263b 80%, rgba(201, 38, 59, .82) 92%, rgba(201, 38, 59, 0) 100%);
-      filter: blur(14px);
+      background: #c9263b;
+      -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, #000 82%, rgba(0,0,0,.72) 93%, transparent 100%);
+      mask-image: radial-gradient(ellipse at center, #000 0%, #000 82%, rgba(0,0,0,.72) 93%, transparent 100%);
+      filter: none;
       opacity: 1;
       animation: lost-status-only-light 2.3s ease-in-out infinite;
     }
