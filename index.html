@@ -1220,6 +1220,41 @@
       #profileScreen .profile-card-normal .profile-lost .info-item > span { font-size: 15px; }
     }
 
+
+    /* Aviso de pérdida sobre la foto: visible, pero sin ocultar el contenido. */
+    #profileScreen .profile-card-lost .top { position: relative; }
+    #profileScreen .profile-card-lost #profileStatus {
+      position: absolute;
+      z-index: 5;
+      top: 14px;
+      left: 14px;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      margin: 0;
+      padding: 7px 11px;
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 999px;
+      background: rgba(201, 55, 70, .93);
+      box-shadow: 0 4px 14px rgba(132, 27, 39, .25);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1;
+      pointer-events: none;
+      animation: lost-status-pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes lost-status-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 4px 14px rgba(132, 27, 39, .25); }
+      50% { transform: scale(1.035); box-shadow: 0 6px 20px rgba(201, 55, 70, .4); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #profileScreen .profile-card-lost #profileStatus { animation: none; }
+    }
+    @media(max-width:420px) {
+      #profileScreen .profile-card-lost #profileStatus { top: 12px; left: 12px; }
+    }
+
 </style>
 </head>
 
@@ -1293,12 +1328,12 @@
           <button class="edit-btn" id="openPinScreen" aria-label="Editar información"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.8 5.2 4 4M4 20l4.5-1 9.8-9.8a2.8 2.8 0 0 0-4-4L4.5 15z"/></svg><span>Editar</span></button>
           <button class="carousel-arrow left" id="prevPhoto" type="button" aria-label="Foto anterior"><span>‹</span></button>
           <div class="pet-photo carousel-photo" id="profilePhoto">🐶</div>
+          <span class="status" id="profileStatus" hidden>Estoy perdido/a</span>
           <button class="carousel-arrow right" id="nextPhoto" type="button" aria-label="Foto siguiente"><span>›</span></button>
           <div class="carousel-dots" id="carouselDots"></div>
         </div>
 
         <div class="body" id="profileBody">
-          <span class="status" id="profileStatus" hidden>Estoy perdido/a</span>
           <div class="profile-identity">
             <h1 id="profileName">Mascota</h1>
             <p class="subtitle" id="profileSubtitle">Ficha de identificación de la mascota.</p>
@@ -1803,6 +1838,7 @@ function showLandingOrTag() {
       els.profileBody.classList.toggle('profile-normal', !isLost);
       els.profileBody.classList.toggle('profile-lost', isLost);
       els.profileBody.parentElement.classList.add('profile-card-normal');
+      els.profileBody.parentElement.classList.toggle('profile-card-lost', isLost);
 
       els.profileName.textContent = data.nombre || "Mascota";
       els.profileZone.textContent = data.zona || "No especificada";
