@@ -1221,7 +1221,7 @@
     }
 
 
-    /* Señal completa de pérdida: el texto y el fondo forman una sola luz pulsante. */
+    /* El pulso pertenece al fondo rojo de la etiqueta; el texto permanece normal. */
     #profileScreen .profile-card-lost .top { position: relative; }
     #profileScreen .profile-card-lost #profileStatus {
       position: absolute;
@@ -1235,27 +1235,25 @@
       padding: 6px 10px;
       border: 0;
       border-radius: 999px;
-      background: radial-gradient(ellipse at 50% 45%, #ff9aa4 0%, #f14e61 46%, #c92f42 100%);
-      box-shadow: 0 0 15px 5px rgba(255, 102, 117, .86), 0 0 32px 13px rgba(219, 50, 69, .56);
+      background: #d53c4e;
+      box-shadow: 0 0 18px 7px rgba(220, 57, 75, .48);
       color: #fff;
       font-size: 12px;
       font-weight: 850;
       line-height: 1;
       letter-spacing: .01em;
-      text-shadow: 0 0 7px rgba(255,255,255,.96), 0 1px 2px rgba(104, 15, 27, .4);
+      text-shadow: none;
       pointer-events: none;
-      animation: lost-status-full-light 2.3s ease-in-out infinite;
+      animation: lost-status-red-light 2.3s ease-in-out infinite;
     }
-    @keyframes lost-status-full-light {
+    @keyframes lost-status-red-light {
       0%, 100% {
-        transform: scale(1);
-        filter: brightness(1);
-        box-shadow: 0 0 15px 5px rgba(255, 102, 117, .86), 0 0 32px 13px rgba(219, 50, 69, .56);
+        background: #d53c4e;
+        box-shadow: 0 0 18px 7px rgba(220, 57, 75, .48);
       }
       50% {
-        transform: scale(1.045);
-        filter: brightness(1.18);
-        box-shadow: 0 0 20px 8px rgba(255, 132, 143, .98), 0 0 40px 18px rgba(234, 52, 74, .72);
+        background: #ef5c6c;
+        box-shadow: 0 0 29px 12px rgba(239, 82, 100, .72);
       }
     }
     @media (prefers-reduced-motion: reduce) {
