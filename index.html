@@ -1279,6 +1279,11 @@
       font-weight: 500;
       line-height: 1.46;
     }
+    #qrApp #sightingHint .sighting-phrase-nowrap {
+      display: block;
+      white-space: nowrap;
+      font-size: clamp(11.5px, 3.2vw, 13.5px);
+    }
     #qrApp #sightingHint .sighting-privacy {
       display: block;
       margin-top: 11px;
@@ -1942,8 +1947,8 @@ function showLandingOrTag() {
       els.sightingFeedback.textContent = "";
       const sightingPetName = data.nombre || "esta mascota";
       els.sightingHintTitle.textContent = isLost ? `Ayudá a ${sightingPetName} a volver con su familia` : "";
-      els.sightingHintText.textContent = isLost
-        ? `Su familia la está buscando. Permití compartir el lugar donde se encuentran para\u00A0ayudarlos\u00A0a\u00A0reunirse.`
+      els.sightingHintText.innerHTML = isLost
+        ? 'Su familia la está buscando. Permití compartir el <span class="sighting-phrase-nowrap">lugar donde se encuentran para ayudarlos a reunirse.</span>'
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
