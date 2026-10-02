@@ -1224,7 +1224,7 @@
     #sightingAction {
       display: none !important;
     }
-    #profileScreen .profile-card-lost #sightingHint[hidden] {
+    #qrApp #sightingHint[hidden] {
       display: none !important;
     }
     #profileScreen.location-request-active .profile-card-lost > .top,
@@ -1233,10 +1233,10 @@
       opacity: .48;
       transition: filter .22s ease, opacity .22s ease;
     }
-    #profileScreen .profile-card-lost #sightingHint {
-      position: absolute;
-      z-index: 20;
-      top: 42px;
+    #qrApp #sightingHint {
+      position: fixed;
+      z-index: 90;
+      top: 78px;
       left: 50%;
       width: min(94%, 382px);
       margin: 0;
@@ -1254,7 +1254,7 @@
       text-align: center;
       animation: sighting-bubble-in .22s ease-out both, sighting-card-pulse 1.85s ease-in-out .22s infinite;
     }
-    #profileScreen .profile-card-lost .sighting-lost-label {
+    #qrApp #sightingHint .sighting-lost-label {
       display: inline-block;
       margin: 3px 0 9px;
       color: #c92f42;
@@ -1263,7 +1263,7 @@
       line-height: 1;
       letter-spacing: .95px;
     }
-    #profileScreen .profile-card-lost #sightingHintTitle {
+    #qrApp #sightingHint #sightingHintTitle {
       display: block;
       margin-bottom: 7px;
       color: #153f2b;
@@ -1272,14 +1272,14 @@
       line-height: 1.18;
       letter-spacing: -.3px;
     }
-    #profileScreen .profile-card-lost #sightingHintText {
+    #qrApp #sightingHint #sightingHintText {
       display: block;
       color: #4d5c54;
       font-size: 13.5px;
       font-weight: 500;
       line-height: 1.46;
     }
-    #profileScreen .profile-card-lost .sighting-privacy {
+    #qrApp #sightingHint .sighting-privacy {
       display: block;
       margin-top: 11px;
       padding-top: 10px;
@@ -1302,14 +1302,14 @@
       }
     }
     @media(max-width:420px) {
-      #profileScreen .profile-card-lost #sightingHint {
-        top: 38px;
+      #qrApp #sightingHint {
+        top: 78px;
         width: min(94%, 360px);
         padding: 16px 17px 17px;
       }
-      #profileScreen .profile-card-lost #sightingHintTitle { font-size: 19px; }
-      #profileScreen .profile-card-lost #sightingHintText { font-size: 13px; }
-      #profileScreen .profile-card-lost .sighting-privacy { font-size: 11.5px; }
+      #qrApp #sightingHint #sightingHintTitle { font-size: 19px; }
+      #qrApp #sightingHint #sightingHintText { font-size: 13px; }
+      #qrApp #sightingHint .sighting-privacy { font-size: 11.5px; }
     }
 
     /* Estado perdido: neón rojo difuso que nace en las cuatro esquinas. */
@@ -1398,6 +1398,12 @@
     <a class="tag-header-logo" href="https://trackmypet.uy/">
   <img src="logo.png" alt="TrackMyPet">
 </a>
+    <div class="lost-location-hint" id="sightingHint" role="status" aria-live="polite" hidden>
+      <span class="sighting-lost-label">MASCOTA PERDIDA</span>
+      <strong id="sightingHintTitle"></strong>
+      <span id="sightingHintText"></span>
+      <span class="sighting-privacy">Tu ubicación se enviará de forma segura únicamente a su propietario.</span>
+    </div>
     <section id="activationScreen" class="screen">
       <div class="card">
         <div class="top"><div class="pet-photo">🐾</div></div>
@@ -1480,12 +1486,6 @@
           <div class="lost-details" id="lostDetails" hidden>
             <div><strong>Zona donde se perdió:</strong> <span id="profileLostZone"></span></div>
             <div id="lostMessageRow"><strong>Mensaje:</strong> <span id="profileLostMessage"></span></div>
-          </div>
-          <div class="lost-location-hint" id="sightingHint" role="status" aria-live="polite" hidden>
-            <span class="sighting-lost-label">MASCOTA PERDIDA</span>
-            <strong id="sightingHintTitle"></strong>
-            <span id="sightingHintText"></span>
-            <span class="sighting-privacy">Tu ubicación se enviará de forma segura únicamente a su propietario.</span>
           </div>
           <button class="sighting-action" id="sightingAction" type="button" hidden>
             <span id="sightingActionText">Compartir mi ubicación</span>
