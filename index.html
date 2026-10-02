@@ -1221,7 +1221,7 @@
     }
 
 
-    /* Aviso de pérdida integrado en una mancha de luz roja difusa. */
+    /* Aviso de pérdida: centro opaco y halo que se desvanece solo en el borde. */
     #profileScreen .profile-card-lost .top { position: relative; }
     #profileScreen .profile-card-lost #profileStatus {
       position: absolute;
@@ -1246,21 +1246,28 @@
       isolation: isolate;
       pointer-events: none;
     }
-    #profileScreen .profile-card-lost #profileStatus::before { display: none; }
-    #profileScreen .profile-card-lost #profileStatus::after {
+    #profileScreen .profile-card-lost #profileStatus::before {
       content: "";
       position: absolute;
       z-index: -1;
-      inset: -15px -20px;
-      border-radius: 50%;
-      background: radial-gradient(ellipse at center, #c9263b 0%, rgba(213, 42, 62, .92) 38%, rgba(224, 55, 73, .52) 66%, rgba(224, 55, 73, 0) 100%);
-      filter: blur(12px);
-      opacity: 1;
-      animation: lost-status-blended-light 2.3s ease-in-out infinite;
+      inset: -2px -1px;
+      border-radius: 999px;
+      background: radial-gradient(ellipse at center, #c9263b 0%, #c9263b 72%, rgba(201, 38, 59, .78) 88%, rgba(201, 38, 59, 0) 100%);
     }
-    @keyframes lost-status-blended-light {
-      0%, 100% { transform: scale(.94); opacity: .72; }
-      50% { transform: scale(1.08); opacity: .98; }
+    #profileScreen .profile-card-lost #profileStatus::after {
+      content: "";
+      position: absolute;
+      z-index: -2;
+      inset: -13px -18px;
+      border-radius: 50%;
+      background: rgba(224, 48, 67, .7);
+      filter: blur(14px);
+      opacity: 1;
+      animation: lost-status-outer-light 2.3s ease-in-out infinite;
+    }
+    @keyframes lost-status-outer-light {
+      0%, 100% { transform: scale(.94); opacity: .56; }
+      50% { transform: scale(1.08); opacity: .86; }
     }
     @media (prefers-reduced-motion: reduce) {
       #profileScreen .profile-card-lost #profileStatus::after { animation: none; }
