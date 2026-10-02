@@ -1221,24 +1221,30 @@
     }
 
 
-    /* Estado perdido: tarjeta fija y luz pulsante en una capa exterior. */
-    #profileScreen .profile-card-lost {
+    /* Estado perdido: la luz pulsa solo en el fondo verde, detrás de la tarjeta. */
+    #profileScreen.profile-lost-screen {
       position: relative;
       isolation: isolate;
-      animation: none;
     }
-    #profileScreen .profile-card-lost::before {
+    #profileScreen.profile-lost-screen::before {
       content: "";
       position: absolute;
-      z-index: -1;
-      inset: -18px;
-      border-radius: 44px;
-      background: rgba(239, 65, 82, .72);
-      filter: blur(22px);
-      opacity: 0;
+      z-index: 0;
+      inset: -24px;
       pointer-events: none;
-      animation: lost-card-light 2.8s ease-in-out infinite;
+      background: radial-gradient(ellipse at 50% 38%, rgba(235, 56, 76, .34) 0%, rgba(235, 56, 76, .18) 30%, rgba(235, 56, 76, .07) 52%, rgba(235, 56, 76, 0) 74%);
+      opacity: 0;
+      animation: lost-background-light 2.8s ease-in-out infinite;
     }
+    #profileScreen.profile-lost-screen > * {
+      position: relative;
+      z-index: 1;
+    }
+    #profileScreen .profile-card-lost {
+      position: relative;
+      animation: none;
+    }
+    #profileScreen .profile-card-lost::before { display: none; }
     #profileScreen .profile-card-lost .top {
       position: relative;
       animation: none;
@@ -1281,7 +1287,7 @@
       mix-blend-mode: difference;
       white-space: nowrap;
     }
-    @keyframes lost-card-light {
+    @keyframes lost-background-light {
       0%, 100% { opacity: 0; }
       50% { opacity: 1; }
     }
@@ -1290,8 +1296,8 @@
       50% { opacity: 1; transform: scale(1.1); }
     }
     @media (prefers-reduced-motion: reduce) {
-      #profileScreen .profile-card-lost::before,
-      #profileScreen .profile-card-lost .status-alert-icon { animation: none; opacity: .65; }
+      #profileScreen.profile-lost-screen::before,
+      #profileScreen .profile-card-lost .status-alert-icon { animation: none; opacity: .55; }
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #profileStatus { top: 13px; left: 13px; }
@@ -1882,6 +1888,7 @@ function showLandingOrTag() {
       els.profileBody.classList.toggle('profile-lost', isLost);
       els.profileBody.parentElement.classList.add('profile-card-normal');
       els.profileBody.parentElement.classList.toggle('profile-card-lost', isLost);
+      document.getElementById('profileScreen').classList.toggle('profile-lost-screen', isLost);
 
       els.profileName.textContent = data.nombre || "Mascota";
       els.profileZone.textContent = data.zona || "No especificada";
