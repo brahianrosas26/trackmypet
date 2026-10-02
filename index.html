@@ -2038,11 +2038,14 @@ function showLandingOrTag() {
       }
     }
     async function requestAutomaticSightingIfAllowed() {
-      if (wasLocationPermissionDenied()) return;
+      const permissionWasDenied = wasLocationPermissionDenied();
       const permissionState = await getLocationPermissionState();
-      if (permissionState === "denied") {
+      if (permissionState === "denied" || (permissionWasDenied && permissionState === null)) {
         rememberLocationPermissionDenied();
         return;
+      }
+      if (permissionState === "prompt" || permissionState === "granted") {
+        clearLocationPermissionDenied();
       }
       const needsPermissionPrompt = permissionState !== "granted";
       if (needsPermissionPrompt) {
