@@ -2013,20 +2013,20 @@ function showLandingOrTag() {
     let sightingSubmitting = false;
     let sightingHintTimer = null;
     let sightingSent = false;
-    const locationDeniedStorageKey = tagCode ? `trackmypet:location-denied:${tagCode}` : null;
+    const locationDeniedStorageKey = tagCode ? `trackmypet:location-denied-session:${tagCode}` : null;
 
     function wasLocationPermissionDenied() {
       if (!locationDeniedStorageKey) return false;
-      try { return window.localStorage.getItem(locationDeniedStorageKey) === "1"; }
+      try { return window.sessionStorage.getItem(locationDeniedStorageKey) === "1"; }
       catch (_) { return false; }
     }
     function rememberLocationPermissionDenied() {
       if (!locationDeniedStorageKey) return;
-      try { window.localStorage.setItem(locationDeniedStorageKey, "1"); } catch (_) {}
+      try { window.sessionStorage.setItem(locationDeniedStorageKey, "1"); } catch (_) {}
     }
     function clearLocationPermissionDenied() {
       if (!locationDeniedStorageKey) return;
-      try { window.localStorage.removeItem(locationDeniedStorageKey); } catch (_) {}
+      try { window.sessionStorage.removeItem(locationDeniedStorageKey); } catch (_) {}
     }
     async function getLocationPermissionState() {
       if (!navigator.permissions || typeof navigator.permissions.query !== "function") return null;
