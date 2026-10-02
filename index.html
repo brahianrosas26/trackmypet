@@ -1943,7 +1943,7 @@ function showLandingOrTag() {
       const sightingPetName = data.nombre || "esta mascota";
       els.sightingHintTitle.textContent = isLost ? `Ayudá a ${sightingPetName} a volver con su familia` : "";
       els.sightingHintText.textContent = isLost
-        ? `Su familia la está buscando. Permití compartir el lugar donde se encuentran para ayudarlos a reunirse.`
+        ? `Su familia la está buscando. Permití compartir el lugar donde se encuentran para\u00A0ayudarlos\u00A0a\u00A0reunirse.`
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
