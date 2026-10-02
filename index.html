@@ -1221,30 +1221,11 @@
     }
 
 
-    /* Estado perdido: la luz pulsa solo en el fondo verde, detrás de la tarjeta. */
-    #profileScreen.profile-lost-screen {
-      position: relative;
-      isolation: isolate;
-    }
-    #profileScreen.profile-lost-screen::before {
-      content: "";
-      position: absolute;
-      z-index: 0;
-      inset: -24px;
-      pointer-events: none;
-      background: radial-gradient(ellipse at 50% 38%, rgba(235, 56, 76, .34) 0%, rgba(235, 56, 76, .18) 30%, rgba(235, 56, 76, .07) 52%, rgba(235, 56, 76, 0) 74%);
-      opacity: 0;
-      animation: lost-background-light 2.8s ease-in-out infinite;
-    }
-    #profileScreen.profile-lost-screen > * {
-      position: relative;
-      z-index: 1;
-    }
+    /* Estado perdido: indicador elegante y pulso detrás de toda la ficha. */
     #profileScreen .profile-card-lost {
       position: relative;
-      animation: none;
+      animation: lost-card-glow 2.8s ease-in-out infinite;
     }
-    #profileScreen .profile-card-lost::before { display: none; }
     #profileScreen .profile-card-lost .top {
       position: relative;
       animation: none;
@@ -1258,13 +1239,15 @@
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      min-height: 0;
+      min-height: 30px;
       margin: 0;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 10px;
+      background: rgba(19, 30, 25, .54);
+      box-shadow: 0 5px 17px rgba(8, 20, 14, .18);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #fff;
       font-size: 12px;
       font-weight: 850;
@@ -1276,28 +1259,31 @@
       mix-blend-mode: normal;
     }
     #profileScreen .profile-card-lost .status-alert-icon {
-      width: 19px;
-      height: 19px;
-      flex: 0 0 19px;
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
       filter: drop-shadow(0 0 5px rgba(239, 65, 82, .85));
       animation: lost-alert-blink 1.15s ease-in-out infinite;
     }
     #profileScreen .profile-card-lost #profileStatusLabel {
       color: #fff;
-      mix-blend-mode: difference;
       white-space: nowrap;
     }
-    @keyframes lost-background-light {
-      0%, 100% { opacity: 0; }
-      50% { opacity: 1; }
+    @keyframes lost-card-glow {
+      0%, 100% {
+        box-shadow: 0 18px 44px rgba(29, 83, 58, .15), 0 0 0 1px rgba(226, 52, 70, .12), 0 0 18px rgba(226, 52, 70, .14);
+      }
+      50% {
+        box-shadow: 0 18px 44px rgba(29, 83, 58, .15), 0 0 0 2px rgba(239, 65, 82, .3), 0 0 38px rgba(239, 65, 82, .42);
+      }
     }
     @keyframes lost-alert-blink {
       0%, 100% { opacity: .72; transform: scale(.92); }
       50% { opacity: 1; transform: scale(1.1); }
     }
     @media (prefers-reduced-motion: reduce) {
-      #profileScreen.profile-lost-screen::before,
-      #profileScreen .profile-card-lost .status-alert-icon { animation: none; opacity: .55; }
+      #profileScreen .profile-card-lost { animation: none; }
+      #profileScreen .profile-card-lost .status-alert-icon { animation: none; }
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #profileStatus { top: 13px; left: 13px; }
@@ -1888,7 +1874,6 @@ function showLandingOrTag() {
       els.profileBody.classList.toggle('profile-lost', isLost);
       els.profileBody.parentElement.classList.add('profile-card-normal');
       els.profileBody.parentElement.classList.toggle('profile-card-lost', isLost);
-      document.getElementById('profileScreen').classList.toggle('profile-lost-screen', isLost);
 
       els.profileName.textContent = data.nombre || "Mascota";
       els.profileZone.textContent = data.zona || "No especificada";
