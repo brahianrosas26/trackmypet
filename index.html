@@ -1221,8 +1221,11 @@
     }
 
 
-    /* Aviso de pérdida: luz difusa con forma de recuadro suave. */
-    #profileScreen .profile-card-lost .top { position: relative; }
+    /* Aviso de pérdida: alerta roja y pulso alrededor de la foto. */
+    #profileScreen .profile-card-lost .top {
+      position: relative;
+      animation: lost-photo-red-pulse 2.4s ease-in-out infinite;
+    }
     #profileScreen .profile-card-lost #profileStatus {
       position: absolute;
       z-index: 5;
@@ -1230,53 +1233,51 @@
       left: 15px;
       display: inline-flex;
       align-items: center;
-      min-height: 30px;
+      gap: 6px;
       margin: 0;
-      padding: 6px 10px;
+      padding: 5px 7px;
       border: 0;
-      border-radius: 10px;
+      border-radius: 8px;
       background: transparent;
-      box-shadow: none;
       color: #fff;
       font-size: 12px;
       font-weight: 850;
       line-height: 1;
-      letter-spacing: .01em;
-      text-shadow: 0 1px 5px rgba(55, 7, 14, .92);
-      isolation: isolate;
+      letter-spacing: .02em;
       pointer-events: none;
+      mix-blend-mode: difference;
     }
-    #profileScreen .profile-card-lost #profileStatus::before {
+    #profileScreen .profile-card-lost .status-alert-icon {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      mix-blend-mode: normal;
+      filter: drop-shadow(0 0 5px rgba(239, 65, 82, .8));
+      animation: lost-alert-blink 1.15s ease-in-out infinite;
+    }
+    #profileScreen .profile-card-lost #profileStatusLabel { color: #fff; }
+    #profileScreen .profile-card-lost .top::after {
       content: "";
       position: absolute;
-      z-index: -1;
-      inset: -8px -10px;
-      border-radius: 14px;
-      background: radial-gradient(ellipse at center, #c9263b 0%, #c9263b 36%, rgba(201, 38, 59, .88) 59%, rgba(201, 38, 59, .34) 82%, rgba(201, 38, 59, 0) 100%);
-      filter: blur(3px);
-      animation: lost-status-core-light 2.3s ease-in-out infinite;
+      z-index: 3;
+      inset: -9px -9px;
+      border-radius: 30px;
+      pointer-events: none;
+      box-shadow: 0 0 22px 8px rgba(228, 46, 67, .42), 0 0 46px 16px rgba(228, 46, 67, .24);
+      animation: lost-photo-red-pulse 2.4s ease-in-out infinite;
     }
-    #profileScreen .profile-card-lost #profileStatus::after {
-      content: "";
-      position: absolute;
-      z-index: -2;
-      inset: -16px -21px;
-      border-radius: 18px;
-      background: radial-gradient(ellipse at center, rgba(224, 48, 67, .58) 0%, rgba(224, 48, 67, .30) 48%, rgba(224, 48, 67, 0) 100%);
-      filter: blur(15px);
-      opacity: 1;
-      animation: lost-status-outer-light 2.3s ease-in-out infinite;
+    @keyframes lost-photo-red-pulse {
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(228, 46, 67, .28)); }
+      50% { filter: drop-shadow(0 0 15px rgba(239, 65, 82, .78)); }
     }
-    @keyframes lost-status-core-light {
-      0%, 100% { transform: scale(.96); opacity: .9; }
-      50% { transform: scale(1.04); opacity: 1; }
-    }
-    @keyframes lost-status-outer-light {
-      0%, 100% { transform: scale(.94); opacity: .56; }
-      50% { transform: scale(1.08); opacity: .86; }
+    @keyframes lost-alert-blink {
+      0%, 100% { opacity: .72; transform: scale(.92); }
+      50% { opacity: 1; transform: scale(1.1); }
     }
     @media (prefers-reduced-motion: reduce) {
-      #profileScreen .profile-card-lost #profileStatus::before, #profileScreen .profile-card-lost #profileStatus::after { animation: none; }
+      #profileScreen .profile-card-lost .top,
+      #profileScreen .profile-card-lost .top::after,
+      #profileScreen .profile-card-lost .status-alert-icon { animation: none; }
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #profileStatus { top: 13px; left: 13px; }
@@ -1355,7 +1356,7 @@
           <button class="edit-btn" id="openPinScreen" aria-label="Editar información"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.8 5.2 4 4M4 20l4.5-1 9.8-9.8a2.8 2.8 0 0 0-4-4L4.5 15z"/></svg><span>Editar</span></button>
           <button class="carousel-arrow left" id="prevPhoto" type="button" aria-label="Foto anterior"><span>‹</span></button>
           <div class="pet-photo carousel-photo" id="profilePhoto">🐶</div>
-          <span class="status" id="profileStatus" hidden>Estoy perdido/a</span>
+          <span class="status" id="profileStatus" hidden><svg class="status-alert-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 21 20H3L12 3.5Z" fill="#ed4154"/><path d="M12 9v5.2M12 17.4v.1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span id="profileStatusLabel">ESTOY PERDIDA</span></span>
           <button class="carousel-arrow right" id="nextPhoto" type="button" aria-label="Foto siguiente"><span>›</span></button>
           <div class="carousel-dots" id="carouselDots"></div>
         </div>
@@ -1644,6 +1645,7 @@ let activationPinVerified = false;
       carouselDots: document.getElementById("carouselDots"),
       profileName: document.getElementById("profileName"),
       profileStatus: document.getElementById("profileStatus"),
+      profileStatusLabel: document.getElementById("profileStatusLabel"),
       profileSubtitle: document.getElementById("profileSubtitle"),
       lostDetails: document.getElementById("lostDetails"),
       profileLostZone: document.getElementById("profileLostZone"),
@@ -1819,7 +1821,7 @@ function showLandingOrTag() {
 
       const isLost = data.perdida === true;
       els.profileStatus.hidden = !isLost;
-      els.profileStatus.textContent = data.sexo === "hembra" ? "Estoy perdida" : "Estoy perdido";
+      els.profileStatusLabel.textContent = data.sexo === "hembra" ? "ESTOY PERDIDA" : "ESTOY PERDIDO";
       els.profileSubtitle.textContent = isLost
         ? "Si me encontraste, por favor contactá a mi familia."
         : "Esta es mi ficha de identificación.";
