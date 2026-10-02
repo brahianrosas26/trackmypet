@@ -1221,37 +1221,63 @@
     }
 
 
+    #sightingAction {
+      display: none !important;
+    }
     #profileScreen .profile-card-lost #sightingHint[hidden] {
       display: none !important;
     }
     #profileScreen.location-request-active .profile-card-lost > .top,
     #profileScreen.location-request-active .profile-card-lost > .body > :not(#sightingHint) {
       filter: blur(4px);
-      opacity: .68;
+      opacity: .66;
       transition: filter .2s ease, opacity .2s ease;
     }
     #profileScreen .profile-card-lost #sightingHint {
       position: absolute;
       z-index: 20;
-      top: 70px;
+      top: 68px;
       left: 50%;
-      width: min(92%, 360px);
+      width: min(92%, 370px);
       margin: 0;
-      padding: 16px 18px;
+      padding: 18px 20px 19px;
       transform: translateX(-50%);
       display: block;
-      border: 1px solid rgba(255,255,255,.44);
-      border-radius: 19px;
-      background: rgba(20, 34, 27, .78);
-      box-shadow: 0 16px 38px rgba(8, 20, 13, .34);
-      backdrop-filter: blur(20px) saturate(1.25);
-      -webkit-backdrop-filter: blur(20px) saturate(1.25);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.45;
-      text-align: center;
+      border: 1px solid rgba(47, 143, 91, .22);
+      border-radius: 21px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 18px 46px rgba(11, 43, 27, .24);
+      backdrop-filter: blur(22px) saturate(1.2);
+      -webkit-backdrop-filter: blur(22px) saturate(1.2);
+      color: #17211b;
+      text-align: left;
       animation: sighting-bubble-in .2s ease-out both;
+    }
+    #profileScreen .profile-card-lost #sightingHint::before {
+      content: "";
+      display: block;
+      width: 38px;
+      height: 4px;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      background: #2f8f5b;
+      box-shadow: 0 3px 12px rgba(47, 143, 91, .28);
+    }
+    #profileScreen .profile-card-lost #sightingHintTitle {
+      display: block;
+      margin-bottom: 5px;
+      color: #164f33;
+      font-size: 19px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -.2px;
+    }
+    #profileScreen .profile-card-lost #sightingHintText {
+      display: block;
+      color: #4f5e56;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.48;
     }
     @keyframes sighting-bubble-in {
       from { opacity: 0; transform: translate(-50%, -8px) scale(.98); }
@@ -1259,11 +1285,12 @@
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #sightingHint {
-        top: 66px;
-        width: min(92%, 340px);
-        padding: 15px 16px;
-        font-size: 14px;
+        top: 64px;
+        width: min(92%, 350px);
+        padding: 17px 18px 18px;
       }
+      #profileScreen .profile-card-lost #sightingHintTitle { font-size: 18px; }
+      #profileScreen .profile-card-lost #sightingHintText { font-size: 13.5px; }
     }
 
     /* Estado perdido: neón rojo difuso que nace en las cuatro esquinas. */
@@ -1435,7 +1462,8 @@
             <div><strong>Zona donde se perdió:</strong> <span id="profileLostZone"></span></div>
             <div id="lostMessageRow"><strong>Mensaje:</strong> <span id="profileLostMessage"></span></div>
           </div>
-          <div class="lost-location-hint" id="sightingHint" hidden>
+          <div class="lost-location-hint" id="sightingHint" role="status" aria-live="polite" hidden>
+            <strong id="sightingHintTitle"></strong>
             <span id="sightingHintText"></span>
           </div>
           <button class="sighting-action" id="sightingAction" type="button" hidden>
@@ -1709,6 +1737,7 @@ let activationPinVerified = false;
       lostMessageRow: document.getElementById("lostMessageRow"),
       profileLostMessage: document.getElementById("profileLostMessage"),
       sightingHint: document.getElementById("sightingHint"),
+      sightingHintTitle: document.getElementById("sightingHintTitle"),
       sightingHintText: document.getElementById("sightingHintText"),
       sightingAction: document.getElementById("sightingAction"),
       sightingActionText: document.getElementById("sightingActionText"),
@@ -1885,13 +1914,15 @@ function showLandingOrTag() {
       const showSightingControls = isLost && !isOwnerView;
       els.lostDetails.hidden = !isLost;
       els.sightingHint.hidden = true;
-      els.sightingAction.hidden = !showSightingControls;
+      els.sightingAction.hidden = true;
       els.sightingAction.disabled = false;
       els.sightingActionText.textContent = "Compartir mi ubicación";
       els.sightingFeedback.hidden = true;
       els.sightingFeedback.textContent = "";
+      const sightingPetName = data.nombre || "esta mascota";
+      els.sightingHintTitle.textContent = isLost ? `¿Encontraste a ${sightingPetName}?` : "";
       els.sightingHintText.textContent = isLost
-        ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Si aceptás el permiso, se compartirá automáticamente con su propietario.`
+        ? `Su familia está buscando a ${sightingPetName}. Si permitís el acceso, TrackMyPet compartirá tu ubicación de forma segura con su propietario para ayudar en la búsqueda.`
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
@@ -2075,9 +2106,14 @@ function showLandingOrTag() {
         error => {
           automaticSightingInProgress = false;
           manualSightingInProgress = false;
-          if (error && error.code === 1) rememberLocationPermissionDenied();
-          if (shouldShowHint) hideSightingHint(3000);
-          else hideSightingHint();
+          if (error && error.code === 1) {
+            rememberLocationPermissionDenied();
+            hideSightingHint();
+          } else if (shouldShowHint) {
+            hideSightingHint(3000);
+          } else {
+            hideSightingHint();
+          }
           if (automatic) return;
           setSightingActionState("idle");
           if (error && error.code === 1) {
