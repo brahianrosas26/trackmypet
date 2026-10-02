@@ -1221,7 +1221,7 @@
     }
 
 
-    /* Aviso de pérdida: centro opaco y halo que se desvanece solo en el borde. */
+    /* Aviso de pérdida: luz difusa con forma de recuadro suave. */
     #profileScreen .profile-card-lost .top { position: relative; }
     #profileScreen .profile-card-lost #profileStatus {
       position: absolute;
@@ -1234,7 +1234,7 @@
       margin: 0;
       padding: 6px 10px;
       border: 0;
-      border-radius: 999px;
+      border-radius: 10px;
       background: transparent;
       box-shadow: none;
       color: #fff;
@@ -1250,9 +1250,9 @@
       content: "";
       position: absolute;
       z-index: -1;
-      inset: -9px -15px;
-      border-radius: 50%;
-      background: radial-gradient(ellipse at center, #c9263b 0%, #c9263b 36%, rgba(201, 38, 59, .88) 58%, rgba(201, 38, 59, .35) 78%, rgba(201, 38, 59, 0) 100%);
+      inset: -8px -10px;
+      border-radius: 14px;
+      background: radial-gradient(ellipse at center, #c9263b 0%, #c9263b 36%, rgba(201, 38, 59, .88) 59%, rgba(201, 38, 59, .34) 82%, rgba(201, 38, 59, 0) 100%);
       filter: blur(3px);
       animation: lost-status-core-light 2.3s ease-in-out infinite;
     }
@@ -1260,16 +1260,16 @@
       content: "";
       position: absolute;
       z-index: -2;
-      inset: -18px -25px;
-      border-radius: 50%;
-      background: radial-gradient(ellipse at center, rgba(224, 48, 67, .62) 0%, rgba(224, 48, 67, .34) 48%, rgba(224, 48, 67, 0) 100%);
+      inset: -16px -21px;
+      border-radius: 18px;
+      background: radial-gradient(ellipse at center, rgba(224, 48, 67, .58) 0%, rgba(224, 48, 67, .30) 48%, rgba(224, 48, 67, 0) 100%);
       filter: blur(15px);
       opacity: 1;
       animation: lost-status-outer-light 2.3s ease-in-out infinite;
     }
     @keyframes lost-status-core-light {
       0%, 100% { transform: scale(.96); opacity: .9; }
-      50% { transform: scale(1.05); opacity: 1; }
+      50% { transform: scale(1.04); opacity: 1; }
     }
     @keyframes lost-status-outer-light {
       0%, 100% { transform: scale(.94); opacity: .56; }
