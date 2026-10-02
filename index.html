@@ -1236,7 +1236,7 @@
     #profileScreen .profile-card-lost #sightingHint {
       position: absolute;
       z-index: 20;
-      top: 14px;
+      top: 42px;
       left: 50%;
       width: min(94%, 382px);
       margin: 0;
@@ -1253,13 +1253,6 @@
       color: #17211b;
       text-align: left;
       animation: sighting-bubble-in .22s ease-out both;
-    }
-    #profileScreen .profile-card-lost #sightingHint::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto;
-      height: 5px;
-      background: linear-gradient(90deg, #e63d50, #f06b77);
     }
     #profileScreen .profile-card-lost .sighting-lost-label {
       display: inline-block;
@@ -1302,7 +1295,7 @@
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #sightingHint {
-        top: 10px;
+        top: 38px;
         width: min(94%, 360px);
         padding: 16px 17px 17px;
       }
