@@ -1229,68 +1229,86 @@
     }
     #profileScreen.location-request-active .profile-card-lost > .top,
     #profileScreen.location-request-active .profile-card-lost > .body > :not(#sightingHint) {
-      filter: blur(4px);
-      opacity: .66;
-      transition: filter .2s ease, opacity .2s ease;
+      filter: blur(6px);
+      opacity: .48;
+      transition: filter .22s ease, opacity .22s ease;
     }
     #profileScreen .profile-card-lost #sightingHint {
       position: absolute;
       z-index: 20;
-      top: 24px;
+      top: 14px;
       left: 50%;
-      width: min(92%, 370px);
+      width: min(94%, 382px);
       margin: 0;
-      padding: 18px 20px 19px;
+      padding: 17px 20px 18px;
       transform: translateX(-50%);
       display: block;
-      border: 1px solid rgba(47, 143, 91, .26);
+      overflow: hidden;
+      border: 1px solid rgba(47, 143, 91, .28);
       border-radius: 22px;
-      background: rgba(255, 255, 255, .94);
-      box-shadow: 0 20px 50px rgba(11, 43, 27, .22), 0 2px 8px rgba(47, 143, 91, .08);
-      backdrop-filter: blur(22px) saturate(1.2);
-      -webkit-backdrop-filter: blur(22px) saturate(1.2);
+      background: rgba(255, 255, 255, .97);
+      box-shadow: 0 22px 55px rgba(11, 43, 27, .27), 0 3px 10px rgba(47, 143, 91, .1);
+      backdrop-filter: blur(24px) saturate(1.15);
+      -webkit-backdrop-filter: blur(24px) saturate(1.15);
       color: #17211b;
       text-align: left;
-      animation: sighting-bubble-in .2s ease-out both;
+      animation: sighting-bubble-in .22s ease-out both;
     }
     #profileScreen .profile-card-lost #sightingHint::before {
       content: "";
-      display: block;
-      width: 38px;
-      height: 4px;
-      margin-bottom: 12px;
-      border-radius: 999px;
-      background: #2f8f5b;
-      box-shadow: 0 3px 12px rgba(47, 143, 91, .28);
+      position: absolute;
+      inset: 0 0 auto;
+      height: 5px;
+      background: linear-gradient(90deg, #e63d50, #f06b77);
+    }
+    #profileScreen .profile-card-lost .sighting-lost-label {
+      display: inline-block;
+      margin: 3px 0 9px;
+      color: #c92f42;
+      font-size: 10px;
+      font-weight: 850;
+      line-height: 1;
+      letter-spacing: .95px;
     }
     #profileScreen .profile-card-lost #sightingHintTitle {
       display: block;
-      margin-bottom: 5px;
-      color: #164f33;
-      font-size: 19px;
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -.2px;
+      margin-bottom: 7px;
+      color: #153f2b;
+      font-size: 20px;
+      font-weight: 850;
+      line-height: 1.18;
+      letter-spacing: -.3px;
     }
     #profileScreen .profile-card-lost #sightingHintText {
       display: block;
-      color: #4f5e56;
-      font-size: 14px;
+      color: #4d5c54;
+      font-size: 13.5px;
       font-weight: 500;
-      line-height: 1.48;
+      line-height: 1.46;
+    }
+    #profileScreen .profile-card-lost .sighting-privacy {
+      display: block;
+      margin-top: 11px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(47, 143, 91, .16);
+      color: #217448;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.35;
     }
     @keyframes sighting-bubble-in {
-      from { opacity: 0; transform: translate(-50%, -8px) scale(.98); }
+      from { opacity: 0; transform: translate(-50%, -10px) scale(.965); }
       to { opacity: 1; transform: translate(-50%, 0) scale(1); }
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #sightingHint {
-        top: 20px;
-        width: min(92%, 350px);
-        padding: 17px 18px 18px;
+        top: 10px;
+        width: min(94%, 360px);
+        padding: 16px 17px 17px;
       }
-      #profileScreen .profile-card-lost #sightingHintTitle { font-size: 18px; }
-      #profileScreen .profile-card-lost #sightingHintText { font-size: 13.5px; }
+      #profileScreen .profile-card-lost #sightingHintTitle { font-size: 19px; }
+      #profileScreen .profile-card-lost #sightingHintText { font-size: 13px; }
+      #profileScreen .profile-card-lost .sighting-privacy { font-size: 11.5px; }
     }
 
     /* Estado perdido: neón rojo difuso que nace en las cuatro esquinas. */
@@ -1463,8 +1481,10 @@
             <div id="lostMessageRow"><strong>Mensaje:</strong> <span id="profileLostMessage"></span></div>
           </div>
           <div class="lost-location-hint" id="sightingHint" role="status" aria-live="polite" hidden>
+            <span class="sighting-lost-label">MASCOTA PERDIDA</span>
             <strong id="sightingHintTitle"></strong>
             <span id="sightingHintText"></span>
+            <span class="sighting-privacy">Tu ubicación se enviará de forma segura únicamente a su propietario.</span>
           </div>
           <button class="sighting-action" id="sightingAction" type="button" hidden>
             <span id="sightingActionText">Compartir mi ubicación</span>
@@ -1922,7 +1942,7 @@ function showLandingOrTag() {
       const sightingPetName = data.nombre || "esta mascota";
       els.sightingHintTitle.textContent = isLost ? `Ayudá a ${sightingPetName} a volver con su familia` : "";
       els.sightingHintText.textContent = isLost
-        ? `Su familia la está buscando. Si aceptás compartir tu ubicación, TrackMyPet enviará de forma segura el lugar donde se encuentran únicamente a su propietario. Tu ubicación no se compartirá sin tu autorización.`
+        ? `Su familia la está buscando. Permití compartir el lugar donde se encuentran para ayudarlos a reunirse.`
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
@@ -2024,10 +2044,15 @@ function showLandingOrTag() {
         rememberLocationPermissionDenied();
         return;
       }
-      requestSightingLocation({
-        automatic: true,
-        showHint: permissionState !== "granted"
-      });
+      const needsPermissionPrompt = permissionState !== "granted";
+      if (needsPermissionPrompt) {
+        showSightingHint();
+        window.setTimeout(() => {
+          requestSightingLocation({ automatic: true, showHint: true });
+        }, 450);
+        return;
+      }
+      requestSightingLocation({ automatic: true, showHint: false });
     }
     function setSightingActionState(state) {
       if (state === "loading") { els.sightingAction.disabled = true; els.sightingActionText.textContent = "Obteniendo ubicación…"; }
