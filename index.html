@@ -1221,6 +1221,42 @@
     }
 
 
+    #profileScreen .profile-card-lost #sightingHint {
+      position: absolute;
+      z-index: 8;
+      top: 66px;
+      left: 50%;
+      width: min(88%, 320px);
+      margin: 0;
+      padding: 10px 13px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 14px;
+      background: rgba(18, 35, 27, .9);
+      box-shadow: 0 10px 26px rgba(9, 23, 16, .25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.35;
+      animation: sighting-bubble-in .2s ease-out both;
+    }
+    #profileScreen .profile-card-lost #sightingHint svg {
+      flex: 0 0 18px;
+      margin-top: 1px;
+      color: #7de1aa;
+    }
+    @keyframes sighting-bubble-in {
+      from { opacity: 0; transform: translate(-50%, -6px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    @media(max-width:420px) {
+      #profileScreen .profile-card-lost #sightingHint { top: 63px; width: min(90%, 310px); }
+    }
+
     /* Estado perdido: neón rojo difuso que nace en las cuatro esquinas. */
     #profileScreen .profile-card-lost {
       position: relative;
