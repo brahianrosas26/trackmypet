@@ -1891,7 +1891,7 @@ function showLandingOrTag() {
       els.sightingFeedback.hidden = true;
       els.sightingFeedback.textContent = "";
       els.sightingHintText.textContent = isLost
-        ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Si aceptás el permiso, se compartirá automáticamente; si no aparece, podés usar el botón.`
+        ? `Tu ubicación puede ayudar a encontrar a ${data.nombre || "esta mascota"}. Si aceptás el permiso, se compartirá automáticamente con su propietario.`
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
@@ -1942,7 +1942,7 @@ function showLandingOrTag() {
       els.callBtn.href = "tel:+" + phone;
 
       showScreen("profile");
-      if (showSightingControls) requestSightingLocation({ automatic: true });
+      if (showSightingControls) void requestAutomaticSightingIfAllowed();
     }
 
     async function submitSighting(position) {
@@ -1962,6 +1962,42 @@ function showLandingOrTag() {
     let sightingSubmitting = false;
     let sightingHintTimer = null;
     let sightingSent = false;
+    const locationDeniedStorageKey = tagCode ? `trackmypet:location-denied:${tagCode}` : null;
+
+    function wasLocationPermissionDenied() {
+      if (!locationDeniedStorageKey) return false;
+      try { return window.localStorage.getItem(locationDeniedStorageKey) === "1"; }
+      catch (_) { return false; }
+    }
+    function rememberLocationPermissionDenied() {
+      if (!locationDeniedStorageKey) return;
+      try { window.localStorage.setItem(locationDeniedStorageKey, "1"); } catch (_) {}
+    }
+    function clearLocationPermissionDenied() {
+      if (!locationDeniedStorageKey) return;
+      try { window.localStorage.removeItem(locationDeniedStorageKey); } catch (_) {}
+    }
+    async function getLocationPermissionState() {
+      if (!navigator.permissions || typeof navigator.permissions.query !== "function") return null;
+      try {
+        const result = await navigator.permissions.query({ name: "geolocation" });
+        return result && result.state ? result.state : null;
+      } catch (_) {
+        return null;
+      }
+    }
+    async function requestAutomaticSightingIfAllowed() {
+      if (wasLocationPermissionDenied()) return;
+      const permissionState = await getLocationPermissionState();
+      if (permissionState === "denied") {
+        rememberLocationPermissionDenied();
+        return;
+      }
+      requestSightingLocation({
+        automatic: true,
+        showHint: permissionState !== "granted"
+      });
+    }
     function setSightingActionState(state) {
       if (state === "loading") { els.sightingAction.disabled = true; els.sightingActionText.textContent = "Obteniendo ubicación…"; }
       else if (state === "sent") { els.sightingAction.disabled = true; els.sightingActionText.textContent = "Ubicación compartida"; }
@@ -1990,6 +2026,7 @@ function showLandingOrTag() {
       els.sightingFeedback.hidden = !message;
     }
     async function handleSightingPosition(position) {
+      clearLocationPermissionDenied();
       hideSightingHint();
       if (sightingSent || sightingSubmitting) return;
       sightingSubmitting = true;
@@ -2022,7 +2059,9 @@ function showLandingOrTag() {
         manualSightingInProgress = true;
         setSightingFeedback("");
       }
-      showSightingHint();
+      const shouldShowHint = !options || options.showHint !== false;
+      if (shouldShowHint) showSightingHint();
+      else hideSightingHint();
       if (!navigator.geolocation) {
         automaticSightingInProgress = false;
         hideSightingHint(3000);
@@ -2036,7 +2075,9 @@ function showLandingOrTag() {
         error => {
           automaticSightingInProgress = false;
           manualSightingInProgress = false;
-          hideSightingHint(3000);
+          if (error && error.code === 1) rememberLocationPermissionDenied();
+          if (shouldShowHint) hideSightingHint(3000);
+          else hideSightingHint();
           if (automatic) return;
           setSightingActionState("idle");
           if (error && error.code === 1) {
@@ -2050,7 +2091,13 @@ function showLandingOrTag() {
         { enableHighAccuracy:true, timeout:20000, maximumAge:0 }
       );
     }
-    els.sightingAction.addEventListener("click", () => requestSightingLocation({ automatic: false }));
+    els.sightingAction.addEventListener("click", async () => {
+      const permissionState = await getLocationPermissionState();
+      requestSightingLocation({
+        automatic: false,
+        showHint: permissionState === "prompt" || permissionState === null
+      });
+    });
 
     function updateLostStatusContrast() {
       const img = els.profilePhoto.querySelector("img");
