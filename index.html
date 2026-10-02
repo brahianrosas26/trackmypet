@@ -1221,7 +1221,7 @@
     }
 
 
-    /* Estado perdido: neón rojo difuso detrás de la tarjeta, sin bloque en el texto. */
+    /* Estado perdido: neón rojo difuso que nace en las cuatro esquinas. */
     #profileScreen .profile-card-lost {
       position: relative;
       isolation: isolate;
@@ -1231,18 +1231,19 @@
       content: "";
       position: absolute;
       z-index: -1;
-      inset: -23px;
+      inset: -20px;
       border-radius: 44px;
-      background: rgba(235, 42, 61, .9);
-      filter: blur(28px);
+      background:
+        radial-gradient(circle at 0 0, rgba(239, 45, 65, .82) 0%, rgba(239, 45, 65, .32) 25%, transparent 46%),
+        radial-gradient(circle at 100% 0, rgba(239, 45, 65, .82) 0%, rgba(239, 45, 65, .32) 25%, transparent 46%),
+        radial-gradient(circle at 0 100%, rgba(239, 45, 65, .82) 0%, rgba(239, 45, 65, .32) 25%, transparent 46%),
+        radial-gradient(circle at 100% 100%, rgba(239, 45, 65, .82) 0%, rgba(239, 45, 65, .32) 25%, transparent 46%);
+      filter: blur(20px);
       opacity: 0;
       pointer-events: none;
-      animation: lost-neon-glow 2.8s ease-in-out infinite;
+      animation: lost-corner-neon 2.8s ease-in-out infinite;
     }
-    #profileScreen .profile-card-lost .top {
-      position: relative;
-      animation: none;
-    }
+    #profileScreen .profile-card-lost .top { position: relative; animation: none; }
     #profileScreen .profile-card-lost .top::after { display: none; }
     #profileScreen .profile-card-lost #profileStatus {
       position: absolute;
@@ -1252,24 +1253,19 @@
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      min-height: 0;
       margin: 0;
       padding: 0;
       border: 0;
-      border-radius: 0;
       background: transparent;
       box-shadow: none;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
       color: #fff;
       font-size: 12px;
       font-weight: 850;
       line-height: 1;
       letter-spacing: .025em;
       text-shadow: 0 1px 3px rgba(0,0,0,.45);
-      isolation: isolate;
       pointer-events: none;
-      mix-blend-mode: difference;
+      mix-blend-mode: normal;
     }
     #profileScreen .profile-card-lost .status-alert-icon {
       width: 22px;
@@ -1277,16 +1273,19 @@
       flex: 0 0 22px;
       filter: drop-shadow(0 0 7px rgba(239, 35, 57, .95));
       animation: lost-alert-blink 1.05s ease-in-out infinite;
-      mix-blend-mode: normal;
     }
     #profileScreen .profile-card-lost #profileStatusLabel {
       color: #fff;
-      mix-blend-mode: difference;
       white-space: nowrap;
+      mix-blend-mode: normal;
     }
-    @keyframes lost-neon-glow {
+    #profileScreen .profile-card-lost #profileStatusLabel.status-on-light {
+      color: #17251d;
+      text-shadow: 0 1px 3px rgba(255,255,255,.6);
+    }
+    @keyframes lost-corner-neon {
       0%, 100% { opacity: 0; }
-      50% { opacity: .95; }
+      50% { opacity: 1; }
     }
     @keyframes lost-alert-blink {
       0%, 100% { opacity: .58; transform: scale(.88); }
@@ -1989,6 +1988,22 @@ function showLandingOrTag() {
     }
     els.sightingAction.addEventListener("click", () => requestSightingLocation({ automatic: false }));
 
+    function updateLostStatusContrast() {
+      const img = els.profilePhoto.querySelector("img");
+      if (!img || !img.complete) return;
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1; canvas.height = 1;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, 1, 1);
+        const pixel = ctx.getImageData(0, 0, 1, 1).data;
+        const luminance = (pixel[0] * .299) + (pixel[1] * .587) + (pixel[2] * .114);
+        els.profileStatusLabel.classList.toggle("status-on-light", luminance > 190);
+      } catch (_) {
+        els.profileStatusLabel.classList.remove("status-on-light");
+      }
+    }
+
     function renderCarousel(petName) {
       if (!currentPhotos.length) {
         els.profilePhoto.innerHTML = "🐶";
@@ -2001,7 +2016,9 @@ function showLandingOrTag() {
       const image = document.createElement('img');
       image.src = currentPhotos[currentPhotoIndex];
       image.alt = 'Foto de ' + petName;
+      image.addEventListener("load", updateLostStatusContrast, { once: true });
       els.profilePhoto.replaceChildren(image);
+      updateLostStatusContrast();
 
       const showControls = currentPhotos.length > 1;
       els.prevPhoto.style.display = showControls ? "block" : "none";
