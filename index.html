@@ -1221,9 +1221,24 @@
     }
 
 
+    #profileScreen.location-request-active::before {
+      content: "";
+      position: fixed;
+      z-index: 7;
+      inset: 0;
+      background: rgba(12, 25, 18, .12);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      pointer-events: none;
+      animation: sighting-backdrop-in .2s ease-out both;
+    }
+    #profileScreen.location-request-active .profile-card-lost {
+      position: relative;
+      z-index: 8;
+    }
     #profileScreen .profile-card-lost #sightingHint {
       position: absolute;
-      z-index: 8;
+      z-index: 9;
       top: 66px;
       left: 50%;
       width: min(88%, 320px);
@@ -1233,12 +1248,12 @@
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      border: 1px solid rgba(255,255,255,.3);
+      border: 1px solid rgba(255,255,255,.32);
       border-radius: 14px;
-      background: rgba(18, 35, 27, .9);
-      box-shadow: 0 10px 26px rgba(9, 23, 16, .25);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(18, 35, 27, .72);
+      box-shadow: 0 12px 30px rgba(9, 23, 16, .28);
+      backdrop-filter: blur(16px) saturate(1.2);
+      -webkit-backdrop-filter: blur(16px) saturate(1.2);
       color: #fff;
       font-size: 12px;
       line-height: 1.35;
@@ -1248,6 +1263,10 @@
       flex: 0 0 18px;
       margin-top: 1px;
       color: #7de1aa;
+    }
+    @keyframes sighting-backdrop-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     @keyframes sighting-bubble-in {
       from { opacity: 0; transform: translate(-50%, -6px); }
@@ -1963,13 +1982,18 @@ function showLandingOrTag() {
     function showSightingHint() {
       if (sightingHintTimer) clearTimeout(sightingHintTimer);
       els.sightingHint.hidden = false;
+      document.getElementById("profileScreen")?.classList.add("location-request-active");
     }
     function hideSightingHint(delay = 0) {
       if (sightingHintTimer) clearTimeout(sightingHintTimer);
-      if (delay > 0) {
-        sightingHintTimer = setTimeout(() => { els.sightingHint.hidden = true; }, delay);
-      } else {
+      const hide = () => {
         els.sightingHint.hidden = true;
+        document.getElementById("profileScreen")?.classList.remove("location-request-active");
+      };
+      if (delay > 0) {
+        sightingHintTimer = setTimeout(hide, delay);
+      } else {
+        hide();
       }
     }
 
