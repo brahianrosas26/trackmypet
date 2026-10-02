@@ -1841,7 +1841,7 @@ function showLandingOrTag() {
         : "Esta es mi ficha de identificación.";
       const showSightingControls = isLost && !isOwnerView;
       els.lostDetails.hidden = !isLost;
-      els.sightingHint.hidden = !showSightingControls;
+      els.sightingHint.hidden = true;
       els.sightingAction.hidden = !showSightingControls;
       els.sightingAction.disabled = false;
       els.sightingActionText.textContent = "Compartir mi ubicación";
@@ -1917,17 +1917,32 @@ function showLandingOrTag() {
     let automaticSightingInProgress = false;
     let manualSightingInProgress = false;
     let sightingSubmitting = false;
+    let sightingHintTimer = null;
     let sightingSent = false;
     function setSightingActionState(state) {
       if (state === "loading") { els.sightingAction.disabled = true; els.sightingActionText.textContent = "Obteniendo ubicación…"; }
       else if (state === "sent") { els.sightingAction.disabled = true; els.sightingActionText.textContent = "Ubicación compartida"; }
       else { els.sightingAction.disabled = false; els.sightingActionText.textContent = "Compartir mi ubicación"; }
     }
+    function showSightingHint() {
+      if (sightingHintTimer) clearTimeout(sightingHintTimer);
+      els.sightingHint.hidden = false;
+    }
+    function hideSightingHint(delay = 0) {
+      if (sightingHintTimer) clearTimeout(sightingHintTimer);
+      if (delay > 0) {
+        sightingHintTimer = setTimeout(() => { els.sightingHint.hidden = true; }, delay);
+      } else {
+        els.sightingHint.hidden = true;
+      }
+    }
+
     function setSightingFeedback(message) {
       els.sightingFeedback.textContent = message;
       els.sightingFeedback.hidden = !message;
     }
     async function handleSightingPosition(position) {
+      hideSightingHint();
       if (sightingSent || sightingSubmitting) return;
       sightingSubmitting = true;
       setSightingActionState("loading");
@@ -1959,8 +1974,10 @@ function showLandingOrTag() {
         manualSightingInProgress = true;
         setSightingFeedback("");
       }
+      showSightingHint();
       if (!navigator.geolocation) {
         automaticSightingInProgress = false;
+        hideSightingHint(3000);
         manualSightingInProgress = false;
         if (!automatic) setSightingFeedback("Este navegador no permite compartir la ubicación.");
         return;
@@ -1971,6 +1988,7 @@ function showLandingOrTag() {
         error => {
           automaticSightingInProgress = false;
           manualSightingInProgress = false;
+          hideSightingHint(3000);
           if (automatic) return;
           setSightingActionState("idle");
           if (error && error.code === 1) {
