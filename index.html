@@ -1236,17 +1236,17 @@
     #profileScreen .profile-card-lost #sightingHint {
       position: absolute;
       z-index: 20;
-      top: 68px;
+      top: 52px;
       left: 50%;
       width: min(92%, 370px);
       margin: 0;
       padding: 18px 20px 19px;
       transform: translateX(-50%);
       display: block;
-      border: 1px solid rgba(47, 143, 91, .22);
-      border-radius: 21px;
-      background: rgba(255, 255, 255, .92);
-      box-shadow: 0 18px 46px rgba(11, 43, 27, .24);
+      border: 1px solid rgba(47, 143, 91, .26);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 20px 50px rgba(11, 43, 27, .22), 0 2px 8px rgba(47, 143, 91, .08);
       backdrop-filter: blur(22px) saturate(1.2);
       -webkit-backdrop-filter: blur(22px) saturate(1.2);
       color: #17211b;
@@ -1285,7 +1285,7 @@
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #sightingHint {
-        top: 64px;
+        top: 48px;
         width: min(92%, 350px);
         padding: 17px 18px 18px;
       }
@@ -1920,9 +1920,9 @@ function showLandingOrTag() {
       els.sightingFeedback.hidden = true;
       els.sightingFeedback.textContent = "";
       const sightingPetName = data.nombre || "esta mascota";
-      els.sightingHintTitle.textContent = isLost ? `¿Encontraste a ${sightingPetName}?` : "";
+      els.sightingHintTitle.textContent = isLost ? `Ayudá a ${sightingPetName} a volver con su familia` : "";
       els.sightingHintText.textContent = isLost
-        ? `Su familia está buscando a ${sightingPetName}. Si permitís el acceso, TrackMyPet compartirá tu ubicación de forma segura con su propietario para ayudar en la búsqueda.`
+        ? `Su familia la está buscando. Si aceptás compartir tu ubicación, TrackMyPet enviará de forma segura el lugar donde se encuentran únicamente a su propietario. Tu ubicación no se compartirá sin tu autorización.`
         : "";
       els.profileLostZone.textContent = data.zona_perdida || data.zona || "No especificada";
       els.profileLostMessage.textContent = data.mensaje_perdida || "Por favor comunicate con mi familia.";
