@@ -1244,46 +1244,15 @@
       transform: translateX(-50%);
       display: block;
       overflow: hidden;
-      border: 1px solid rgba(47, 143, 91, .28);
+      border: 1.5px solid rgba(83, 255, 156, .9);
       border-radius: 22px;
       background: rgba(255, 255, 255, .97);
-      box-shadow: 0 22px 55px rgba(11, 43, 27, .27), 0 3px 10px rgba(47, 143, 91, .1);
+      box-shadow: 0 20px 48px rgba(11, 43, 27, .24), 0 0 8px rgba(83, 255, 156, .45), inset 0 0 5px rgba(83, 255, 156, .12);
       backdrop-filter: blur(24px) saturate(1.15);
       -webkit-backdrop-filter: blur(24px) saturate(1.15);
       color: #17211b;
       text-align: center;
-      animation: sighting-bubble-in .22s ease-out both;
-    }
-    @property --sighting-border-angle {
-      syntax: "<angle>";
-      initial-value: 0deg;
-      inherits: false;
-    }
-    #profileScreen .profile-card-lost #sightingHint::before {
-      content: "";
-      position: absolute;
-      z-index: 2;
-      inset: 0;
-      padding: 2px;
-      border-radius: inherit;
-      background: conic-gradient(
-        from var(--sighting-border-angle),
-        transparent 0deg 282deg,
-        rgba(47, 143, 91, .18) 300deg,
-        #38b879 322deg,
-        #8ce7b4 338deg,
-        transparent 356deg
-      );
-      -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-      animation: sighting-border-travel 3.2s linear infinite;
-    }
-    @keyframes sighting-border-travel {
-      to { --sighting-border-angle: 360deg; }
+      animation: sighting-bubble-in .22s ease-out both, sighting-card-pulse 1.85s ease-in-out .22s infinite;
     }
     #profileScreen .profile-card-lost .sighting-lost-label {
       display: inline-block;
@@ -1323,6 +1292,14 @@
     @keyframes sighting-bubble-in {
       from { opacity: 0; transform: translate(-50%, -10px) scale(.965); }
       to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    }
+    @keyframes sighting-card-pulse {
+      0%, 100% {
+        box-shadow: 0 20px 48px rgba(11, 43, 27, .24), 0 0 7px rgba(83, 255, 156, .38), inset 0 0 4px rgba(83, 255, 156, .1);
+      }
+      50% {
+        box-shadow: 0 22px 54px rgba(11, 43, 27, .27), 0 0 18px rgba(83, 255, 156, .8), inset 0 0 8px rgba(83, 255, 156, .2);
+      }
     }
     @media(max-width:420px) {
       #profileScreen .profile-card-lost #sightingHint {
